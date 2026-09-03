@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 import { FileText, ReceiptText, TrendingUp } from "lucide-react";
 import { usePos } from "../store/context.js";
-import { Badge, Button, EmptyState } from "../components/ui.jsx";
+import {
+  Badge,
+  Button,
+  Chip,
+  EmptyState,
+  PageHeader,
+} from "../components/ui.jsx";
 import ReceiptModal from "../components/ReceiptModal.jsx";
 import DaySummaryModal from "../components/DaySummaryModal.jsx";
 import { summarize } from "../lib/report.js";
@@ -73,31 +79,29 @@ export default function Sales() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-surface px-4">
-        <div className="flex gap-2">
-          {RANGES.map((r) => (
-            <button
-              key={r.id}
-              onClick={() => setRange(r.id)}
-              className={`rounded-pill px-3 py-1.5 text-sm font-medium transition-colors ${
-                range === r.id
-                  ? "bg-ink text-white"
-                  : "bg-surface-2 text-muted hover:text-ink"
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
-        <Button
-          variant="outline"
-          disabled={!inRange.length}
-          onClick={() => setShowSummary(true)}
-        >
-          <FileText className="size-4" />
-          <span className="hidden sm:inline">Summary</span>
-        </Button>
-      </header>
+      <PageHeader
+        title="Sales"
+        actions={
+          <Button
+            variant="outline"
+            disabled={!inRange.length}
+            onClick={() => setShowSummary(true)}
+          >
+            <FileText className="size-4" />
+            <span className="hidden sm:inline">Summary</span>
+          </Button>
+        }
+      >
+        {RANGES.map((r) => (
+          <Chip
+            key={r.id}
+            active={range === r.id}
+            onClick={() => setRange(r.id)}
+          >
+            {r.label}
+          </Chip>
+        ))}
+      </PageHeader>
 
       <div className="scroll-slim min-h-0 flex-1 overflow-auto p-4">
         <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -148,7 +152,7 @@ export default function Sales() {
             hint="Ring up an order on the Sell screen and it lands here."
           />
         ) : (
-          <div className="overflow-hidden rounded-card border border-line bg-surface">
+          <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
             <table className="w-full text-sm">
               <thead className="border-b border-line bg-surface-2 text-left text-xs tracking-wide text-muted uppercase">
                 <tr>
@@ -236,7 +240,7 @@ function Stat({ label, value, accent }) {
   return (
     <div
       className={`rounded-card border px-4 py-3 ${
-        accent ? "border-accent/30 bg-accent-soft" : "border-line bg-surface"
+        accent ? "border-accent/30 bg-accent-soft" : "border-line bg-surface shadow-card"
       }`}
     >
       <p
@@ -258,7 +262,7 @@ function Stat({ label, value, accent }) {
 
 function Panel({ title, children }) {
   return (
-    <section className="overflow-hidden rounded-card border border-line bg-surface">
+    <section className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
       <h2 className="border-b border-line bg-surface-2 px-4 py-2.5 text-xs font-medium tracking-wide text-muted uppercase">
         {title}
       </h2>

@@ -1,34 +1,29 @@
 import { useEffect, useMemo, useReducer } from "react";
 import { PosContext } from "./context.js";
-import { reducer, hydrate, STORAGE_KEY } from "./reducer.js";
+import { reducer } from "./reducer.js";
+import { storage } from "../data/storage.js";
 import { computeTotals } from "../lib/cart.js";
 
-function readStored() {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
 /**
- * There is no backend yet. State lives in a reducer and is mirrored to
- * localStorage so a refresh does not wipe an open cart or the day's
- * sales. Swapping in Supabase or IndexedDB later means replacing this
- * file, not the screens.
+ * State lives in one reducer and is persisted through a single adapter
+ * (src/data/storage.js). Screens never touch storage themselves, so
+ * moving to Firebase or Mongo means writing one adapter, not editing
+ * every page.
  */
 export default function PosProvider({ children }) {
-  const [state, dispatch] = useReducer(reducer, null, () =>
-    hydrate(readStored()),
-  );
+  const [state, dispatch] = useReducer(reducer, null, () => storage.load());
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      // Storage full or blocked. The session still works in memory.
-    }
+    storage.save(state);
   }, [state]);
+
+  /* Another tab of the same till, and later the server, pushes changes
+     in here. dispatch runs from the callback rather than the effect
+     body, so this is a subscription and not a cascading render. */
+  useEffect(
+    () => storage.subscribe((next) => dispatch({ type: "state/replace", state: next })),
+    [],
+  );
 
   const value = useMemo(() => {
     const activeCart = state.carts[state.activeTabId] ?? {
@@ -40,7 +35,11 @@ export default function PosProvider({ children }) {
       ...state,
       dispatch,
       activeCart,
-      totals: computeTotals(activeCart.items, activeCart.discount, state.settings),
+      totals: computeTotals(
+        activeCart.items,
+        activeCart.discount,
+        state.settings,
+      ),
       productById: Object.fromEntries(state.products.map((p) => [p.id, p])),
       categoryById: Object.fromEntries(state.categories.map((c) => [c.id, c])),
     };

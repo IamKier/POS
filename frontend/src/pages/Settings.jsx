@@ -1,6 +1,14 @@
 import { RotateCcw, Trash2 } from "lucide-react";
 import { usePos } from "../store/context.js";
-import { Button, Field, Input, Select, Textarea, Toggle } from "../components/ui.jsx";
+import {
+  Button,
+  Field,
+  Input,
+  PageHeader,
+  Select,
+  Textarea,
+  Toggle,
+} from "../components/ui.jsx";
 
 const CURRENCIES = ["PHP", "USD", "EUR", "SGD"];
 
@@ -10,9 +18,11 @@ export default function Settings() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center border-b border-line bg-surface px-4">
-        <h1 className="text-sm font-semibold text-ink">Settings</h1>
-      </header>
+      <PageHeader title="Settings">
+        <p className="truncate text-sm text-muted">
+          Store details, tax rules and how the register behaves
+        </p>
+      </PageHeader>
 
       <div className="scroll-slim min-h-0 flex-1 overflow-auto p-4">
         <div className="mx-auto max-w-3xl space-y-4">
@@ -200,7 +210,7 @@ export default function Settings() {
 
 function Section({ title, hint, children }) {
   return (
-    <section className="rounded-card border border-line bg-surface p-5">
+    <section className="rounded-card border border-line bg-surface p-5 shadow-card">
       <h2 className="text-sm font-semibold text-ink">{title}</h2>
       {hint ? <p className="mt-0.5 mb-4 text-sm text-muted">{hint}</p> : <div className="mb-4" />}
       {children}

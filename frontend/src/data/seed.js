@@ -14,6 +14,7 @@ export const defaultSettings = {
   taxInclusive: true,
   lowStockThreshold: 5,
   serviceMode: "retail", // "retail" for one running cart, "tables" for open bills
+  theme: "system", // "system", "light" or "dark"
   receiptFooter: "Thank you and please come again.",
 };
 

@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react";
 import { LayoutGrid, Package, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { usePos } from "../store/context.js";
-import { Badge, Button, EmptyState, Input } from "../components/ui.jsx";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  PageHeader,
+  SearchInput,
+} from "../components/ui.jsx";
 import ProductModal from "../components/ProductModal.jsx";
 import CategoryModal from "../components/CategoryModal.jsx";
 import { formatMoney } from "../lib/format.js";
@@ -42,37 +48,64 @@ export default function Products() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-surface px-4">
-        <div className="relative w-full max-w-sm">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search products"
-            className="pl-9"
-          />
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button variant="outline" onClick={() => setManagingCategories(true)}>
-            <LayoutGrid className="size-4" />
-            <span className="hidden sm:inline">Categories</span>
-          </Button>
-          <Button onClick={() => setEditing("new")}>
-            <Plus className="size-4" />
-            <span className="hidden sm:inline">New product</span>
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        title="Products"
+        actions={
+          <>
+            <Button variant="outline" onClick={() => setManagingCategories(true)}>
+              <LayoutGrid className="size-4" />
+              <span className="hidden sm:inline">Categories</span>
+            </Button>
+            <Button onClick={() => setEditing("new")}>
+              <Plus className="size-4" />
+              <span className="hidden sm:inline">New product</span>
+            </Button>
+          </>
+        }
+      >
+        <SearchInput
+          icon={Search}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by name, SKU or barcode"
+          className="max-w-sm"
+        />
+      </PageHeader>
 
       <div className="scroll-slim min-h-0 flex-1 overflow-auto p-4">
+        <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Stat label="Products" value={products.length} />
+          <Stat
+            label="On the sell screen"
+            value={products.filter((p) => p.active).length}
+          />
+          <Stat
+            label="Stock tracked"
+            value={products.filter((p) => p.trackStock).length}
+          />
+          <Stat label="Categories" value={categories.length} />
+        </div>
+
         {rows.length === 0 ? (
           <EmptyState
             icon={Package}
-            title="Nothing here yet"
-            hint="Add your first product, or clear the search box."
+            title={query ? "No products match" : "Nothing here yet"}
+            hint={
+              query
+                ? "Clear the search box to see the whole catalog."
+                : "Add your first product to start selling."
+            }
+            action={
+              query ? null : (
+                <Button onClick={() => setEditing("new")}>
+                  <Plus className="size-4" />
+                  New product
+                </Button>
+              )
+            }
           />
         ) : (
-          <div className="overflow-hidden rounded-card border border-line bg-surface">
+          <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
             <table className="w-full text-sm">
               <thead className="border-b border-line bg-surface-2 text-left text-xs tracking-wide text-muted uppercase">
                 <tr>
@@ -156,17 +189,23 @@ export default function Products() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => setEditing(product)}
-                            className="rounded p-1.5 text-muted hover:bg-surface hover:text-accent"
+                            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-muted transition-colors hover:bg-accent-soft hover:text-accent"
                             aria-label={`Edit ${product.name}`}
                           >
                             <Pencil className="size-4" />
+                            <span className="hidden text-xs font-medium lg:inline">
+                              Edit
+                            </span>
                           </button>
                           <button
                             onClick={() => remove(product)}
-                            className="rounded p-1.5 text-muted hover:bg-surface hover:text-bad"
+                            className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-muted transition-colors hover:bg-bad-soft hover:text-bad"
                             aria-label={`Delete ${product.name}`}
                           >
                             <Trash2 className="size-4" />
+                            <span className="hidden text-xs font-medium lg:inline">
+                              Delete
+                            </span>
                           </button>
                         </div>
                       </td>
@@ -206,5 +245,16 @@ export default function Products() {
         />
       ) : null}
     </>
+  );
+}
+
+function Stat({ label, value }) {
+  return (
+    <div className="rounded-card border border-line bg-surface px-4 py-3 shadow-card">
+      <p className="text-xs font-medium tracking-wide text-muted uppercase">
+        {label}
+      </p>
+      <p className="tnum mt-1 text-2xl font-bold text-ink">{value}</p>
+    </div>
   );
 }

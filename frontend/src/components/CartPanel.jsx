@@ -134,7 +134,7 @@ export default function CartPanel({
                     onClick={() => onDiscount({ ...cart.discount, type })}
                     className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                       cart.discount.type === type
-                        ? "bg-accent text-white"
+                        ? "bg-accent-solid text-white"
                         : "bg-surface text-muted hover:bg-surface-2"
                     }`}
                   >

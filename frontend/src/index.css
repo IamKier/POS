@@ -1,22 +1,34 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------
-   Design tokens. Single source of truth for color and shape.
-   They live in Tailwind's own namespaces (--color-*, --radius-*),
-   so every token is also a utility class: bg-surface, text-muted,
-   border-line, rounded-card.
+   Design tokens. Every color in the app resolves to one of these,
+   which is what makes the dark theme a token swap rather than a
+   second set of classes. They live in Tailwind's own namespaces
+   (--color-*, --radius-*, --shadow-*), so each token is also a
+   utility: bg-surface, text-muted, border-line, shadow-card.
+
+   Two accents on purpose:
+     --color-accent        text and icons, lightens in dark
+     --color-accent-solid  filled buttons, stays put so white
+                           label text keeps its contrast
    --------------------------------------------------------------- */
 @theme {
-  --color-canvas: #f3f4f6;
+  --color-canvas: #f5f6f8;
   --color-surface: #ffffff;
-  --color-surface-2: #f9fafb;
-  --color-line: #e5e7eb;
-  --color-line-strong: #d1d5db;
-  --color-ink: #111827;
-  --color-muted: #6b7280;
+  --color-surface-2: #f1f3f7;
+  --color-surface-3: #e9ecf2;
+  --color-line: #e6e8ee;
+  --color-line-strong: #d3d8e2;
+
+  --color-ink: #101828;
+  --color-muted: #667085;
+
   --color-accent: #4f46e5;
+  --color-accent-solid: #4f46e5;
+  --color-accent-hover: #4338ca;
   --color-accent-soft: #eef2ff;
-  --color-good: #059669;
+
+  --color-good: #047857;
   --color-good-soft: #ecfdf5;
   --color-warn: #b45309;
   --color-warn-soft: #fffbeb;
@@ -25,6 +37,71 @@
 
   --radius-card: 0.75rem;
   --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06);
+  --shadow-raised: 0 4px 12px -2px rgb(16 24 40 / 0.1);
+  --shadow-pop: 0 16px 40px -12px rgb(16 24 40 / 0.28);
+}
+
+/* Dark theme. "system" is the default: no attribute on the root, so
+   the media query decides. An explicit choice stamps data-theme and
+   wins in both directions. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-canvas: #0b0f17;
+    --color-surface: #141a24;
+    --color-surface-2: #1b2330;
+    --color-surface-3: #232c3b;
+    --color-line: #222b39;
+    --color-line-strong: #333e50;
+
+    --color-ink: #e7ecf3;
+    --color-muted: #94a3b8;
+
+    --color-accent: #a5b4fc;
+    --color-accent-solid: #4f46e5;
+    --color-accent-hover: #6366f1;
+    --color-accent-soft: #1e2445;
+
+    --color-good: #34d399;
+    --color-good-soft: #06251c;
+    --color-warn: #fbbf24;
+    --color-warn-soft: #2a2010;
+    --color-bad: #f87171;
+    --color-bad-soft: #2c1618;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+    --shadow-raised: 0 4px 12px -2px rgb(0 0 0 / 0.5);
+    --shadow-pop: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-canvas: #0b0f17;
+  --color-surface: #141a24;
+  --color-surface-2: #1b2330;
+  --color-surface-3: #232c3b;
+  --color-line: #222b39;
+  --color-line-strong: #333e50;
+
+  --color-ink: #e7ecf3;
+  --color-muted: #94a3b8;
+
+  --color-accent: #a5b4fc;
+  --color-accent-solid: #4f46e5;
+  --color-accent-hover: #6366f1;
+  --color-accent-soft: #1e2445;
+
+  --color-good: #34d399;
+  --color-good-soft: #06251c;
+  --color-warn: #fbbf24;
+  --color-warn-soft: #2a2010;
+  --color-bad: #f87171;
+  --color-bad-soft: #2c1618;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 4px 12px -2px rgb(0 0 0 / 0.5);
+  --shadow-pop: 0 16px 40px -12px rgb(0 0 0 / 0.7);
 }
 
 html,
@@ -38,17 +115,24 @@ body {
   color: var(--color-ink);
   font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
+  color-scheme: light dark;
 }
 
-/* Numbers that need to line up in columns (money, quantities). */
+/* Numbers that need to line up in a column: money, quantities, counts. */
 .tnum {
   font-variant-numeric: tabular-nums;
 }
 
-/* Hide scrollbars on the touch-scrolled panels without losing scroll. */
 .scroll-slim {
   scrollbar-width: thin;
   scrollbar-color: var(--color-line-strong) transparent;
+}
+
+/* A receipt is paper. It stays white in either theme, on screen and
+   on the roll, so what the cashier previews is what prints. */
+.paper {
+  background: #ffffff;
+  color: #000000;
 }
 
 /* ---------------------------------------------------------------

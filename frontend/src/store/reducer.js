@@ -270,6 +270,11 @@ export function reducer(state, action) {
     case "settings/save":
       return { ...state, settings: { ...state.settings, ...action.patch } };
 
+    /* Wholesale swap of the state, from another tab today and from the
+       first server snapshot once there is a backend. */
+    case "state/replace":
+      return action.state;
+
     case "state/reset":
       return initialState();
 

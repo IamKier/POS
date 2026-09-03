@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Search, TriangleAlert, X } from "lucide-react";
 import { usePos } from "../store/context.js";
+import { Chip, SearchInput } from "../components/ui.jsx";
 import ProductGrid from "../components/ProductGrid.jsx";
 import CartPanel from "../components/CartPanel.jsx";
 import ModifierModal from "../components/ModifierModal.jsx";
@@ -111,16 +112,18 @@ export default function Sell() {
       <div className="flex min-h-0 flex-1">
         <section className="flex min-w-0 flex-1 flex-col">
           <header className="no-print flex h-16 items-center gap-3 border-b border-line bg-surface px-4">
-            <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
-              <input
+            <h1 className="hidden shrink-0 text-base font-semibold text-ink md:block">
+              Sell
+            </h1>
+            <div className="relative flex min-w-0 flex-1 items-center">
+              <SearchInput
                 ref={searchRef}
+                icon={Search}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={onSearchKeyDown}
-                placeholder="Search or scan a barcode"
+                placeholder="Search a product, or scan a barcode"
                 autoFocus
-                className="h-10 w-full rounded-card border border-line-strong bg-surface pr-9 pl-9 text-sm text-ink outline-none placeholder:text-muted/70 focus:border-accent focus:ring-2 focus:ring-accent/20"
               />
               {query ? (
                 <button
@@ -151,7 +154,7 @@ export default function Sell() {
                     onClick={() => dispatch({ type: "tab/select", tabId: tab.id })}
                     className={`flex shrink-0 items-center gap-2 rounded-pill px-3 py-1.5 text-sm font-medium transition-colors ${
                       active
-                        ? "bg-accent text-white"
+                        ? "bg-accent-solid text-white"
                         : count
                           ? "bg-accent-soft text-accent"
                           : "bg-surface text-muted hover:text-ink"
@@ -180,19 +183,24 @@ export default function Sell() {
           ) : null}
 
           <div className="no-print flex items-center gap-2 overflow-x-auto border-b border-line bg-surface px-4 py-2.5">
-            <CategoryChip
+            <Chip
               active={categoryId === "all"}
               onClick={() => setCategoryId("all")}
-              label="All"
-            />
+            >
+              All
+            </Chip>
             {categories.map((c) => (
-              <CategoryChip
+              <Chip
                 key={c.id}
                 active={categoryId === c.id}
                 onClick={() => setCategoryId(c.id)}
-                label={c.name}
-                color={c.color}
-              />
+              >
+                <span
+                  className="size-2 rounded-full"
+                  style={{ background: categoryId === c.id ? "#fff" : c.color }}
+                />
+                {c.name}
+              </Chip>
             ))}
           </div>
 
@@ -270,23 +278,3 @@ export default function Sell() {
   );
 }
 
-function CategoryChip({ active, onClick, label, color }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex shrink-0 items-center gap-2 rounded-pill px-3 py-1.5 text-sm font-medium transition-colors ${
-        active
-          ? "bg-ink text-white"
-          : "bg-surface-2 text-muted hover:bg-line hover:text-ink"
-      }`}
-    >
-      {color ? (
-        <span
-          className="size-2 rounded-full"
-          style={{ background: active ? "#fff" : color }}
-        />
-      ) : null}
-      {label}
-    </button>
-  );
-}

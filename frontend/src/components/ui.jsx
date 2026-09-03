@@ -1,13 +1,17 @@
 import { useEffect } from "react";
 import { X } from "lucide-react";
 
+/* Filled buttons keep a fixed background in both themes so the white
+   label never loses contrast. Everything else rides the tokens. */
 const VARIANTS = {
-  primary: "bg-accent text-white hover:bg-indigo-700 disabled:bg-line-strong",
-  outline: "border border-line-strong bg-surface text-ink hover:bg-surface-2",
-  subtle: "bg-surface-2 text-ink hover:bg-line",
+  primary:
+    "bg-accent-solid text-white shadow-card hover:bg-accent-hover disabled:bg-line-strong disabled:text-muted disabled:shadow-none",
+  outline:
+    "border border-line-strong bg-surface text-ink hover:bg-surface-2 hover:border-accent/40",
+  subtle: "bg-surface-2 text-ink hover:bg-surface-3",
   ghost: "text-muted hover:bg-surface-2 hover:text-ink",
-  danger: "bg-bad text-white hover:bg-red-700",
-  good: "bg-good text-white hover:bg-emerald-700",
+  danger: "bg-red-600 text-white shadow-card hover:bg-red-700",
+  good: "bg-emerald-600 text-white shadow-card hover:bg-emerald-700",
 };
 
 const SIZES = {
@@ -24,7 +28,7 @@ export function Button({
 }) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-card font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-card font-medium transition-all disabled:cursor-not-allowed disabled:opacity-70 ${VARIANTS[variant]} ${SIZES[size]} ${className}`}
       {...props}
     />
   );
@@ -41,20 +45,38 @@ export function IconButton({ className = "", label, ...props }) {
   );
 }
 
+export function PageHeader({ title, actions, children }) {
+  return (
+    <header className="no-print flex h-16 shrink-0 items-center gap-3 border-b border-line bg-surface px-4">
+      {title ? (
+        <h1 className="hidden shrink-0 text-base font-semibold text-ink md:block">
+          {title}
+        </h1>
+      ) : null}
+      <div className="flex min-w-0 flex-1 items-center gap-2">{children}</div>
+      {actions ? (
+        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+      ) : null}
+    </header>
+  );
+}
+
 export function Field({ label, hint, children, className = "" }) {
   return (
     <label className={`block ${className}`}>
-      <span className="mb-1 block text-xs font-medium tracking-wide text-muted uppercase">
+      <span className="mb-1.5 block text-xs font-medium tracking-wide text-muted uppercase">
         {label}
       </span>
       {children}
-      {hint ? <span className="mt-1 block text-xs text-muted">{hint}</span> : null}
+      {hint ? (
+        <span className="mt-1.5 block text-xs text-muted">{hint}</span>
+      ) : null}
     </label>
   );
 }
 
 const INPUT_BASE =
-  "w-full rounded-card border border-line-strong bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-accent focus:ring-2 focus:ring-accent/20";
+  "w-full rounded-card border border-line-strong bg-surface px-3 py-2 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-accent-solid focus:ring-2 focus:ring-accent-solid/25";
 
 export function Input({ className = "", ...props }) {
   return <input className={`${INPUT_BASE} ${className}`} {...props} />;
@@ -68,6 +90,20 @@ export function Textarea({ className = "", ...props }) {
   return <textarea className={`${INPUT_BASE} ${className}`} {...props} />;
 }
 
+export function SearchInput({ icon: Icon, className = "", ...props }) {
+  return (
+    <div className={`relative min-w-0 flex-1 ${className}`}>
+      {Icon ? (
+        <Icon className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
+      ) : null}
+      <input
+        className={`h-10 w-full rounded-card border border-line-strong bg-surface pr-3 text-sm text-ink outline-none transition-colors placeholder:text-muted/70 focus:border-accent-solid focus:ring-2 focus:ring-accent-solid/25 ${Icon ? "pl-9" : "pl-3"}`}
+        {...props}
+      />
+    </div>
+  );
+}
+
 export function Toggle({ checked, onChange, label }) {
   return (
     <button
@@ -78,14 +114,28 @@ export function Toggle({ checked, onChange, label }) {
       className="flex items-center gap-3 text-sm text-ink"
     >
       <span
-        className={`relative h-6 w-11 shrink-0 rounded-pill transition-colors ${checked ? "bg-accent" : "bg-line-strong"}`}
+        className={`relative h-6 w-11 shrink-0 rounded-pill transition-colors ${checked ? "bg-accent-solid" : "bg-line-strong"}`}
       >
         <span
-          className={`absolute top-0.5 size-5 rounded-full bg-white transition-all ${checked ? "left-5.5" : "left-0.5"}`}
+          className={`absolute top-0.5 size-5 rounded-full bg-white shadow-sm transition-all ${checked ? "left-5.5" : "left-0.5"}`}
         />
       </span>
       {label}
     </button>
+  );
+}
+
+/** The one pill used for filters, categories and range switches. */
+export function Chip({ active, className = "", ...props }) {
+  return (
+    <button
+      className={`flex shrink-0 items-center gap-2 rounded-pill px-3 py-1.5 text-sm font-medium transition-colors ${
+        active
+          ? "bg-accent-solid text-white shadow-card"
+          : "bg-surface-2 text-muted hover:bg-surface-3 hover:text-ink"
+      } ${className}`}
+      {...props}
+    />
   );
 }
 
@@ -109,23 +159,36 @@ export function Badge({ tone = "neutral", children, className = "" }) {
 export function Card({ className = "", ...props }) {
   return (
     <div
-      className={`rounded-card border border-line bg-surface ${className}`}
+      className={`rounded-card border border-line bg-surface shadow-card ${className}`}
       {...props}
     />
   );
 }
 
-export function EmptyState({ icon: Icon, title, hint }) {
+export function EmptyState({ icon: Icon, title, hint, action }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 px-6 py-14 text-center">
-      {Icon ? <Icon className="size-8 text-line-strong" /> : null}
+    <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center">
+      {Icon ? (
+        <span className="mb-1 flex size-12 items-center justify-center rounded-full bg-surface-2">
+          <Icon className="size-6 text-muted" />
+        </span>
+      ) : null}
       <p className="text-sm font-medium text-ink">{title}</p>
       {hint ? <p className="max-w-xs text-sm text-muted">{hint}</p> : null}
+      {action ? <div className="mt-2">{action}</div> : null}
     </div>
   );
 }
 
-export function Modal({ open, onClose, title, subtitle, children, footer, width = "max-w-lg" }) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  subtitle,
+  children,
+  footer,
+  width = "max-w-lg",
+}) {
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => {
@@ -138,12 +201,12 @@ export function Modal({ open, onClose, title, subtitle, children, footer, width 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-[2px] sm:items-center sm:p-6">
       <div
-        className={`flex max-h-full w-full ${width} flex-col overflow-hidden rounded-t-2xl bg-surface shadow-2xl sm:rounded-card`}
+        className={`flex max-h-full w-full ${width} flex-col overflow-hidden rounded-t-2xl border border-line bg-surface shadow-pop sm:rounded-card`}
       >
         <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
-          <div>
+          <div className="min-w-0">
             <h2 className="text-base font-semibold text-ink">{title}</h2>
             {subtitle ? (
               <p className="mt-0.5 text-sm text-muted">{subtitle}</p>
@@ -153,9 +216,11 @@ export function Modal({ open, onClose, title, subtitle, children, footer, width 
             <X className="size-4" />
           </IconButton>
         </header>
-        <div className="scroll-slim flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="scroll-slim flex-1 overflow-y-auto px-5 py-4">
+          {children}
+        </div>
         {footer ? (
-          <footer className="flex items-center justify-end gap-2 border-t border-line bg-surface-2 px-5 py-3">
+          <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-line bg-surface-2 px-5 py-3">
             {footer}
           </footer>
         ) : null}

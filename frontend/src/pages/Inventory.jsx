@@ -1,7 +1,14 @@
 import { useMemo, useState } from "react";
 import { Boxes, Search, TriangleAlert } from "lucide-react";
 import { usePos } from "../store/context.js";
-import { Badge, Button, EmptyState, Input } from "../components/ui.jsx";
+import {
+  Badge,
+  Button,
+  Chip,
+  EmptyState,
+  PageHeader,
+  SearchInput,
+} from "../components/ui.jsx";
 import StockAdjustModal from "../components/StockAdjustModal.jsx";
 import { formatMoney, formatDateTime, formatNumber } from "../lib/format.js";
 
@@ -53,32 +60,26 @@ export default function Inventory() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between gap-3 border-b border-line bg-surface px-4">
-        <div className="relative w-full max-w-sm">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" />
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search tracked items"
-            className="pl-9"
-          />
-        </div>
-        <div className="flex shrink-0 gap-2">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFilter(f.id)}
-              className={`rounded-pill px-3 py-1.5 text-sm font-medium transition-colors ${
-                filter === f.id
-                  ? "bg-ink text-white"
-                  : "bg-surface-2 text-muted hover:text-ink"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </header>
+      <PageHeader
+        title="Inventory"
+        actions={FILTERS.map((f) => (
+          <Chip
+            key={f.id}
+            active={filter === f.id}
+            onClick={() => setFilter(f.id)}
+          >
+            {f.label}
+          </Chip>
+        ))}
+      >
+        <SearchInput
+          icon={Search}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search tracked items"
+          className="max-w-sm"
+        />
+      </PageHeader>
 
       <div className="scroll-slim min-h-0 flex-1 overflow-auto p-4">
         <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -99,7 +100,7 @@ export default function Inventory() {
             hint="Turn on stock tracking for a product in the Products screen."
           />
         ) : (
-          <div className="overflow-hidden rounded-card border border-line bg-surface">
+          <div className="overflow-hidden rounded-card border border-line bg-surface shadow-card">
             <table className="w-full text-sm">
               <thead className="border-b border-line bg-surface-2 text-left text-xs tracking-wide text-muted uppercase">
                 <tr>
@@ -169,7 +170,7 @@ export default function Inventory() {
               Sales, voids and manual adjustments will show up here.
             </p>
           ) : (
-            <ul className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface">
+            <ul className="divide-y divide-line overflow-hidden rounded-card border border-line bg-surface shadow-card">
               {stockMoves.slice(0, 25).map((move) => (
                 <li
                   key={move.id}
@@ -226,7 +227,7 @@ function Stat({ label, value, hint, tone = "neutral" }) {
     good: "text-good",
   };
   return (
-    <div className="rounded-card border border-line bg-surface px-4 py-3">
+    <div className="rounded-card border border-line bg-surface px-4 py-3 shadow-card">
       <p className="text-xs font-medium tracking-wide text-muted uppercase">
         {label}
       </p>
