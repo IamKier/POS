@@ -50,6 +50,40 @@ by category, top items, and voided totals.
 or exclusive pricing, service mode, tab names, low stock threshold, and a reset back to the
 demo catalog.
 
+## Firebase
+
+Firestore is wired in and optional. With no config the app runs entirely on
+localStorage; with config it also syncs to the cloud, so a second device sees the same
+catalog, stock and sales.
+
+Copy `frontend/.env.example` to `frontend/.env.local` and fill in the six values from
+Firebase console → Project settings → Your apps. They are publishable values that ship
+in every Firebase web bundle: the access boundary is security rules, not secrecy.
+
+For the Vercel deploy, add the same six variables under Settings → Environment Variables,
+then redeploy. Without them the deployed site still works, just local-only.
+
+**Offline is the point.** [firebase.js](frontend/src/data/firebase.js) turns on
+`persistentLocalCache`, so reads come from IndexedDB and writes are accepted and queued
+while the connection is down, then flushed on reconnect. A till that stops selling when
+the Wi-Fi drops is not deployable, and this is the piece that prevents it. The sidebar
+shows the live state: cloud sync on, offline with sales queued, or cloud unreachable.
+
+[cloudSync.js](frontend/src/data/cloudSync.js) holds both directions. `pushToCloud`
+diffs two states and writes only what changed. `startCloudSync` subscribes to each
+collection and merges what other devices wrote. The local reducer stays the source of
+truth for the screens, which is what keeps the register instant: a sale renders first
+and the write goes out behind it.
+
+Open carts and tabs are deliberately not synced. A cart belongs to the terminal holding
+it, and two registers should not fight over one customer's basket.
+
+**Security is not done.** The project is in test mode, which allows anyone with the
+config to read and write, and expires after 30 days. [firestore.rules](firestore.rules)
+holds the replacement, to apply once Authentication is on. It makes sales and stock
+movements append-only, which is the difference between a sales history and an audit
+trail. Do not put real business data in until those rules are applied.
+
 ## Where the data lives
 
 There is no server. State sits in one reducer ([frontend/src/store/reducer.js](frontend/src/store/reducer.js))

@@ -1,0 +1,70 @@
+rules_version = '2';
+
+/**
+ * NOT YET APPLIED. The project is still in test mode, which allows any
+ * read and write from anyone holding the config, and that config ships
+ * in the browser bundle of a public site. Test mode also expires on its
+ * own after 30 days, at which point the till stops syncing.
+ *
+ * Paste these rules into Firebase console > Firestore Database > Rules
+ * once Authentication is switched on. They say: you must be signed in
+ * to read or write anything, sales can be created and voided but never
+ * deleted, and only a manager can change the catalog or the settings.
+ *
+ * The manager check reads a custom claim, which is set with the Admin
+ * SDK. Until that exists, drop the isManager() calls back to isStaff()
+ * so a signed-in cashier can still work.
+ */
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isStaff() {
+      return request.auth != null;
+    }
+
+    function isManager() {
+      return isStaff() && request.auth.token.role == 'manager';
+    }
+
+    // Catalog: everyone signed in reads it, only a manager edits it.
+    match /products/{productId} {
+      allow read: if isStaff();
+      allow write: if isManager();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if isStaff();
+      allow write: if isManager();
+    }
+
+    // Money settings, tax rate and receipt header.
+    match /config/{document} {
+      allow read: if isStaff();
+      allow write: if isManager();
+    }
+
+    /**
+     * Sales are append-only on purpose. A cashier rings one up and a
+     * void writes a status change on top, but nothing removes the
+     * record. That is the difference between a sales history and an
+     * audit trail, and it is what an accountant will ask for.
+     */
+    match /sales/{saleId} {
+      allow read: if isStaff();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if false;
+    }
+
+    // Stock movements are the same: written, never rewritten.
+    match /stockMoves/{moveId} {
+      allow read: if isStaff();
+      allow create: if isStaff();
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

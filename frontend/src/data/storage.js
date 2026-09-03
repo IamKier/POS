@@ -12,18 +12,16 @@ import { STORAGE_KEY, hydrate } from "../store/reducer.js";
  *   subscribe(onNext) -> call onNext(state) when the data changes
  *                        somewhere else. Returns an unsubscribe.
  *
- * localAdapter below is the whole implementation today. A Firestore or
- * Mongo adapter satisfies the same three functions, with two differences
- * worth planning for:
+ * This adapter stays in place even with Firestore configured. It is the
+ * instant, synchronous first paint: the till opens with yesterday's
+ * catalog already on screen instead of an empty grid waiting on a
+ * network round trip. Firestore then merges in through cloudSync.js and
+ * corrects anything another device changed.
  *
- *   - load() becomes async. PosProvider will need a loading state, and
- *     the reducer gains a "state/replace" action (it already has one)
- *     to swallow the first server snapshot.
- *   - a real backend stores collections, not one blob. products, sales
- *     and stockMoves each become a collection, so save() turns into a
- *     write of what actually changed rather than the entire state. The
- *     blob shape here is a stand-in that keeps the app honest until a
- *     backend is chosen, not a schema to carry over.
+ * The blob shape here is deliberately not the cloud schema. Firestore
+ * stores products, categories, sales and stockMoves as collections of
+ * documents, because that is what lets two registers write at once
+ * without clobbering each other's whole state.
  */
 
 export function createLocalAdapter(key = STORAGE_KEY) {

@@ -270,10 +270,18 @@ export function reducer(state, action) {
     case "settings/save":
       return { ...state, settings: { ...state.settings, ...action.patch } };
 
-    /* Wholesale swap of the state, from another tab today and from the
-       first server snapshot once there is a backend. */
+    /* Wholesale swap of the state, from another tab on this machine. */
     case "state/replace":
       return action.state;
+
+    /* One collection arriving from Firestore, whether this device wrote
+       it or another register did. Carts and tabs are never touched:
+       they belong to the terminal, not to the account. */
+    case "remote/merge":
+      return { ...state, [action.slice]: action.docs };
+
+    case "remote/settings":
+      return { ...state, settings: { ...state.settings, ...action.settings } };
 
     case "state/reset":
       return initialState();

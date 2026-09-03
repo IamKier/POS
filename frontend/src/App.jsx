@@ -12,6 +12,7 @@ import {
   Sun,
 } from "lucide-react";
 import PosProvider from "./store/PosProvider.jsx";
+import { subscribeStatus } from "./data/cloudSync.js";
 import { usePos } from "./store/context.js";
 import Sell from "./pages/Sell.jsx";
 import Products from "./pages/Products.jsx";
@@ -84,6 +85,77 @@ function ThemeToggle() {
   );
 }
 
+/**
+ * A till needs to say out loud whether it is online, because the answer
+ * changes what the cashier should expect, not whether they can sell.
+ * Firestore queues writes made offline and flushes them on reconnect.
+ */
+function ConnectionBadge() {
+  const [online, setOnline] = useState(true);
+  const [status, setStatus] = useState("off");
+
+  useEffect(() => {
+    const update = () => setOnline(window.navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
+
+  useEffect(() => subscribeStatus(setStatus), []);
+
+  if (status === "off") {
+    return (
+      <p className="mt-2 hidden px-3 pb-1 text-xs text-muted lg:block">
+        Local data only. Nothing leaves this browser.
+      </p>
+    );
+  }
+
+  const state = !online
+    ? {
+        dot: "bg-warn",
+        text: "text-warn",
+        label: "Offline, sales queued",
+        title:
+          "No internet. Selling continues and every sale syncs when the connection returns.",
+      }
+    : status === "error"
+      ? {
+          dot: "bg-bad",
+          text: "text-bad",
+          label: "Cloud unreachable",
+          title:
+            "Firestore refused the connection. Check that the database exists and that security rules allow this app. Selling still works and stays on this device.",
+        }
+      : status === "synced"
+        ? {
+            dot: "bg-good",
+            text: "text-muted",
+            label: "Cloud sync on",
+            title: "Connected. Sales and stock sync to every device on this store.",
+          }
+        : {
+            dot: "bg-line-strong",
+            text: "text-muted",
+            label: "Connecting",
+            title: "Reaching Firestore.",
+          };
+
+  return (
+    <div
+      title={state.title}
+      className="mt-1 flex items-center gap-3 rounded-card px-3 py-2 text-xs"
+    >
+      <span className={`size-2 shrink-0 rounded-full ${state.dot}`} />
+      <span className={`hidden lg:block ${state.text}`}>{state.label}</span>
+    </div>
+  );
+}
+
 function Shell() {
   const { settings } = usePos();
   const [page, setPage] = useState("sell");
@@ -140,9 +212,7 @@ function Shell() {
 
         <div className="border-t border-line p-2 lg:p-3">
           <ThemeToggle />
-          <p className="mt-2 hidden px-3 pb-1 text-xs text-muted lg:block">
-            Local data. Nothing leaves this browser yet.
-          </p>
+          <ConnectionBadge />
         </div>
       </nav>
 
