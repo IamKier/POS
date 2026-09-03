@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------
+   Design tokens. Single source of truth for color and shape.
+   They live in Tailwind's own namespaces (--color-*, --radius-*),
+   so every token is also a utility class: bg-surface, text-muted,
+   border-line, rounded-card.
+   --------------------------------------------------------------- */
+@theme {
+  --color-canvas: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-surface-2: #f9fafb;
+  --color-line: #e5e7eb;
+  --color-line-strong: #d1d5db;
+  --color-ink: #111827;
+  --color-muted: #6b7280;
+  --color-accent: #4f46e5;
+  --color-accent-soft: #eef2ff;
+  --color-good: #059669;
+  --color-good-soft: #ecfdf5;
+  --color-warn: #b45309;
+  --color-warn-soft: #fffbeb;
+  --color-bad: #dc2626;
+  --color-bad-soft: #fef2f2;
+
+  --radius-card: 0.75rem;
+  --radius-pill: 999px;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers that need to line up in columns (money, quantities). */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Hide scrollbars on the touch-scrolled panels without losing scroll. */
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+/* ---------------------------------------------------------------
+   Printing. Only the node marked .print-area reaches the paper,
+   sized for an 80mm thermal roll.
+   --------------------------------------------------------------- */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 76mm;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border: 0;
+    background: #fff;
+    color: #000;
+  }
+  .no-print {
+    display: none !important;
+  }
+  @page {
+    size: 80mm auto;
+    margin: 3mm;
+  }
+}
