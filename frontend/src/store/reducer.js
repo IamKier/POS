@@ -10,7 +10,12 @@ import {
 export const STORAGE_KEY = "pos.state.v1";
 
 function emptyCart() {
-  return { items: [], discount: { type: "percent", value: 0 }, note: "" };
+  return {
+    items: [],
+    discount: { type: "percent", value: 0 },
+    note: "",
+    customer: null,
+  };
 }
 
 /**
@@ -110,6 +115,13 @@ export function reducer(state, action) {
       });
     }
 
+    /* Senior citizen or PWD, with the ID that has to appear on the
+       receipt and in the day's report. */
+    case "cart/setCustomer": {
+      const cart = cartOf(state, action.tabId);
+      return withCart(state, action.tabId, { ...cart, customer: action.customer });
+    }
+
     case "cart/setNote": {
       const cart = cartOf(state, action.tabId);
       return withCart(state, action.tabId, { ...cart, note: action.note });
@@ -168,6 +180,7 @@ export function reducer(state, action) {
         tabName: tab?.name ?? "Walk-in",
         cashier: cashier ?? null,
         note: cart.note,
+        customer: cart.customer ?? null,
         items: cart.items.map((l) => ({ ...l })),
         discountRule: cart.discount,
         ...totals,

@@ -14,6 +14,9 @@ export function summarize(sales, productById, categoryById) {
 
   let gross = 0;
   let discounts = 0;
+  let statutory = 0;
+  let statutoryCount = 0;
+  let vatExemptSales = 0;
   let tax = 0;
   let total = 0;
   let items = 0;
@@ -24,6 +27,14 @@ export function summarize(sales, productById, categoryById) {
     tax += sale.tax;
     total += sale.total;
     items += sale.itemCount;
+
+    /* Senior and PWD sales are reported apart from ordinary ones,
+       because the exemption has to be declared separately. */
+    if (sale.customer) {
+      statutory += sale.statutoryDiscount ?? sale.discount;
+      statutoryCount += 1;
+      vatExemptSales += sale.total;
+    }
 
     const method = sale.payment.method;
     byMethod[method] = round2((byMethod[method] ?? 0) + sale.total);
@@ -49,6 +60,9 @@ export function summarize(sales, productById, categoryById) {
     voidedValue: round2(voided.reduce((sum, s) => sum + s.total, 0)),
     gross: round2(gross),
     discounts: round2(discounts),
+    statutoryDiscount: round2(statutory),
+    statutorySales: statutoryCount,
+    vatExemptSales: round2(vatExemptSales),
     tax: round2(tax),
     total: round2(total),
     items,

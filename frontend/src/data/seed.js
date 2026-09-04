@@ -13,6 +13,8 @@ export const defaultSettings = {
   taxRate: 0.12,
   taxInclusive: true,
   lowStockThreshold: 5,
+  statutoryDiscount: true, // senior citizen and PWD, 20 percent and VAT exempt
+  statutoryRate: 0.2,
   serviceMode: "retail", // "retail" for one running cart, "tables" for open bills
   theme: "system", // "system", "light" or "dark"
   receiptFooter: "Thank you and please come again.",

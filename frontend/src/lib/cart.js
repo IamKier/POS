@@ -48,21 +48,58 @@ export function discountAmount(subtotal, discount) {
  * contains the tax, so the tax is backed out of the total rather than
  * added on top. The exclusive branch is there for places that add it.
  */
-export function computeTotals(items, discount, settings) {
+export function computeTotals(items, discount, settings, customer = null) {
   const subtotal = round2(items.reduce((sum, l) => sum + lineTotal(l), 0));
   const discountValue = discountAmount(subtotal, discount);
   const net = round2(subtotal - discountValue);
   const rate = Number(settings?.taxRate) || 0;
+  const itemCount = items.reduce((n, l) => n + l.qty, 0);
+
+  /**
+   * The senior citizen and PWD discount is not an ordinary 20 percent
+   * off, and getting it wrong is a compliance problem rather than a
+   * rounding one. Two things happen together: the sale becomes VAT
+   * exempt, and the 20 percent comes off the VAT-exempt amount.
+   *
+   * On a 112 peso VAT-inclusive sale: strip the VAT to get 100, take 20
+   * off that, and the customer pays 80. Taking 20 percent off 112 and
+   * charging 89.60 overcharges them, and leaving the VAT in
+   * misdeclares it.
+   *
+   * It does not stack with a promotional discount, which is why the
+   * ordinary discount is ignored here rather than applied first.
+   */
+  if (customer?.type) {
+    const exempt = settings?.taxInclusive
+      ? round2(subtotal / (1 + rate))
+      : subtotal;
+    const statutory = round2(exempt * (Number(settings?.statutoryRate) || 0.2));
+    return {
+      subtotal,
+      discount: statutory,
+      statutoryDiscount: statutory,
+      vatExempt: true,
+      taxable: 0,
+      taxExempt: exempt,
+      tax: 0,
+      total: round2(exempt - statutory),
+      itemCount,
+      customer,
+    };
+  }
 
   if (settings?.taxInclusive) {
     const tax = round2(net - net / (1 + rate));
     return {
       subtotal,
       discount: discountValue,
+      statutoryDiscount: 0,
+      vatExempt: false,
       taxable: round2(net - tax),
+      taxExempt: 0,
       tax,
       total: net,
-      itemCount: items.reduce((n, l) => n + l.qty, 0),
+      itemCount,
     };
   }
 
@@ -70,9 +107,12 @@ export function computeTotals(items, discount, settings) {
   return {
     subtotal,
     discount: discountValue,
+    statutoryDiscount: 0,
+    vatExempt: false,
     taxable: net,
+    taxExempt: 0,
     tax,
     total: round2(net + tax),
-    itemCount: items.reduce((n, l) => n + l.qty, 0),
+    itemCount,
   };
 }

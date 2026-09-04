@@ -9,6 +9,7 @@ import ModifierModal from "../components/ModifierModal.jsx";
 import PaymentModal from "../components/PaymentModal.jsx";
 import ReceiptModal from "../components/ReceiptModal.jsx";
 import ApprovalModal from "../components/ApprovalModal.jsx";
+import CustomerDiscountModal from "../components/CustomerDiscountModal.jsx";
 
 export default function Sell() {
   const {
@@ -33,6 +34,7 @@ export default function Sell() {
   const [warning, setWarning] = useState("");
   const [approval, setApproval] = useState(null);
   const [discountApproved, setDiscountApproved] = useState(false);
+  const [customerDiscountOpen, setCustomerDiscountOpen] = useState(false);
   const searchRef = useRef(null);
   const { isManager, user, profile } = useAuth();
 
@@ -254,6 +256,7 @@ export default function Sell() {
             setDiscountApproved(false);
           }}
           onCharge={() => setPaying(true)}
+          onCustomerDiscount={() => setCustomerDiscountOpen(true)}
           discountLocked={!isManager && !discountApproved}
           onUnlockDiscount={() =>
             setApproval({
@@ -263,6 +266,23 @@ export default function Sell() {
           }
         />
       </div>
+
+      {customerDiscountOpen ? (
+        <CustomerDiscountModal
+          items={activeCart.items}
+          settings={settings}
+          current={activeCart.customer}
+          onClose={() => setCustomerDiscountOpen(false)}
+          onRemove={() => {
+            dispatch({ type: "cart/setCustomer", tabId: activeTabId, customer: null });
+            setCustomerDiscountOpen(false);
+          }}
+          onApply={(customer) => {
+            dispatch({ type: "cart/setCustomer", tabId: activeTabId, customer });
+            setCustomerDiscountOpen(false);
+          }}
+        />
+      ) : null}
 
       {approval ? (
         <ApprovalModal

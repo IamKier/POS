@@ -50,6 +50,18 @@ export default function DaySummaryModal({ summary, settings, rangeLabel, onClose
             label={`${settings.taxLabel}${settings.taxInclusive ? " included" : ""}`}
             value={money(summary.tax)}
           />
+          {summary.statutorySales ? (
+            <>
+              <Row
+                label={`Senior/PWD discount (${summary.statutorySales})`}
+                value={`-${money(summary.statutoryDiscount)}`}
+              />
+              <Row
+                label={`${settings.taxLabel}-exempt sales`}
+                value={money(summary.vatExemptSales)}
+              />
+            </>
+          ) : null}
           <div className="mt-1 flex justify-between border-t border-dashed border-black pt-1 text-sm font-bold">
             <span>NET SALES</span>
             <span className="tnum">{money(summary.total)}</span>

@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { Lock, Minus, Percent, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import {
+  IdCard,
+  Lock,
+  Minus,
+  Percent,
+  Plus,
+  ShoppingCart,
+  Trash2,
+} from "lucide-react";
 import { Button, EmptyState, IconButton, Input } from "./ui.jsx";
 import { formatMoney } from "../lib/format.js";
 
@@ -15,6 +23,7 @@ export default function CartPanel({
   onCharge,
   discountLocked,
   onUnlockDiscount,
+  onCustomerDiscount,
 }) {
   const [editingDiscount, setEditingDiscount] = useState(false);
   const currency = settings.currency;
@@ -168,11 +177,34 @@ export default function CartPanel({
             </div>
           ) : null}
 
+          {settings.statutoryDiscount ? (
+            <div className="flex items-center justify-between gap-2">
+              <button
+                onClick={onCustomerDiscount}
+                className={`flex items-center gap-1 transition-colors hover:text-accent ${
+                  cart.customer ? "font-medium text-accent" : "text-muted"
+                }`}
+              >
+                <IdCard className="size-3.5" />
+                {cart.customer
+                  ? `${cart.customer.type === "pwd" ? "PWD" : "Senior"}: ${cart.customer.name}`
+                  : "Senior / PWD"}
+              </button>
+              <span className="tnum text-ink">
+                {totals.statutoryDiscount
+                  ? `-${money(totals.statutoryDiscount)}`
+                  : ""}
+              </span>
+            </div>
+          ) : null}
+
           <Line
             label={
-              settings.taxInclusive
-                ? `${settings.taxLabel} included`
-                : settings.taxLabel
+              totals.vatExempt
+                ? `${settings.taxLabel} exempt`
+                : settings.taxInclusive
+                  ? `${settings.taxLabel} included`
+                  : settings.taxLabel
             }
             value={money(totals.tax)}
           />

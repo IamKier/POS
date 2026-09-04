@@ -134,6 +134,12 @@ export default function Sales() {
           <Stat label="Transactions" value={formatNumber(summary.transactions)} />
           <Stat label="Items sold" value={formatNumber(summary.items)} />
           <Stat label="Average sale" value={money(summary.average)} />
+          {summary.statutorySales ? (
+            <Stat
+              label={`Senior and PWD (${summary.statutorySales})`}
+              value={`-${money(summary.statutoryDiscount)}`}
+            />
+          ) : null}
         </div>
 
         <div className="mb-4 grid gap-3 lg:grid-cols-2">

@@ -61,6 +61,7 @@ export default function PosProvider({ children }) {
       items: [],
       discount: { type: "percent", value: 0 },
       note: "",
+      customer: null,
     };
     return {
       ...state,
@@ -70,6 +71,7 @@ export default function PosProvider({ children }) {
         activeCart.items,
         activeCart.discount,
         state.settings,
+        activeCart.customer,
       ),
       productById: Object.fromEntries(state.products.map((p) => [p.id, p])),
       categoryById: Object.fromEntries(state.categories.map((c) => [c.id, c])),

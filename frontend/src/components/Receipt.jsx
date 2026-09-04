@@ -70,9 +70,20 @@ export default function Receipt({ sale, settings }) {
 
       <Row label={`Subtotal (${sale.itemCount} items)`} value={money(sale.subtotal)} />
       {sale.discount > 0 ? (
-        <Row label="Discount" value={`-${money(sale.discount)}`} />
+        <Row
+          label={sale.vatExempt ? "Less 20% discount" : "Discount"}
+          value={`-${money(sale.discount)}`}
+        />
       ) : null}
-      {settings.taxInclusive ? (
+      {sale.vatExempt ? (
+        <>
+          <Row
+            label={`${settings.taxLabel}-exempt sale`}
+            value={money(sale.taxExempt)}
+          />
+          <Row label={`${settings.taxLabel}`} value={money(0)} />
+        </>
+      ) : settings.taxInclusive ? (
         <>
           <Row label={`${settings.taxLabel}able`} value={money(sale.taxable)} />
           <Row
@@ -100,6 +111,18 @@ export default function Receipt({ sale, settings }) {
       ) : null}
       {sale.payment.reference ? (
         <Row label="Reference" value={sale.payment.reference} />
+      ) : null}
+
+      {sale.customer ? (
+        <>
+          <Divider />
+          <p className="font-bold">
+            {sale.customer.type === "pwd" ? "PWD" : "Senior citizen"} discount
+          </p>
+          <div>Name: {sale.customer.name}</div>
+          <div>ID no: {sale.customer.idNumber}</div>
+          <div className="mt-2">Signature: ____________________</div>
+        </>
       ) : null}
 
       {sale.note ? <p className="mt-2">Note: {sale.note}</p> : null}

@@ -192,3 +192,27 @@ tamper evident audit trail are not part of this build.
 Users and shift login, cash drawer float and cash counts, returns against a receipt (voids
 only for now), suppliers and purchase orders, customer accounts, multi-store, and hardware
 integration beyond browser printing.
+
+## Senior citizen and PWD discount
+
+Philippine law grants a 20 percent discount to senior citizens and persons with
+disability, and makes the sale VAT exempt. Those are two separate things happening at
+once, and the order matters:
+
+```
+Gross (VAT inclusive)          112.00
+Less VAT, 112 / 1.12        =  100.00   the sale becomes VAT exempt
+Less 20% of 100             =   20.00
+Amount due                  =   80.00
+```
+
+Taking 20 percent off 112 and charging 89.60 overcharges the customer, and leaving the VAT
+in misdeclares it. `npm run check` asserts both, along with the rule that a promotional
+discount does not stack on top.
+
+The discount is granted against a named ID holder, so the till captures the name and the
+OSCA or PWD ID number, and the receipt prints them with a signature line to match the
+booklet the customer signs. The day summary reports the discount total, the number of such
+sales, and VAT-exempt sales separately, because the exemption is declared separately.
+
+Turn it off in Settings for a shop outside the Philippines.

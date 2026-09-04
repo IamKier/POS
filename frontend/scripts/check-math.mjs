@@ -136,5 +136,45 @@ const editAndSell = productOperation(beforeProduct, { ...beforeProduct, name: 'C
 check('an edit that also moves stock still sends the whole product', editAndSell.data.name, 'Cola 330ml');
 check('and still sends stock as a delta', editAndSell.stockDelta, -1);
 
+
+// --- senior citizen and PWD discount ------------------------------------
+// The statutory discount is not 20 percent off the shelf price. The sale
+// becomes VAT exempt first, then 20 percent comes off the exempt amount.
+// A 112 peso VAT-inclusive sale must end at 80, not 89.60.
+const phSettings = { taxRate: 0.12, taxInclusive: true, statutoryRate: 0.2 };
+const senior = computeTotals(
+  [{ unitPrice: 112, qty: 1 }],
+  { type: 'percent', value: 0 },
+  phSettings,
+  { type: 'senior', name: 'Lola Ising', idNumber: 'OSCA-1234' },
+);
+check('VAT is stripped before the discount', senior.taxExempt, 100);
+check('the discount is 20 percent of the exempt amount', senior.statutoryDiscount, 20);
+check('the customer pays 80, not 89.60', senior.total, 80);
+check('the sale is VAT exempt', [senior.vatExempt, senior.tax], [true, 0]);
+
+// A promotional discount must not stack on top of the statutory one.
+const stacked = computeTotals(
+  [{ unitPrice: 112, qty: 1 }],
+  { type: 'percent', value: 50 },
+  phSettings,
+  { type: 'pwd', name: 'Juan', idNumber: 'PWD-9' },
+);
+check('a promo discount does not stack with the statutory one', stacked.total, 80);
+
+// Tax-exclusive shops take the 20 percent off the plain subtotal.
+const exclusiveSenior = computeTotals(
+  [{ unitPrice: 100, qty: 1 }],
+  null,
+  { taxRate: 0.12, taxInclusive: false, statutoryRate: 0.2 },
+  { type: 'senior', name: 'Lola', idNumber: 'X' },
+);
+check('exclusive pricing: 20 percent off, no tax added', [exclusiveSenior.total, exclusiveSenior.tax], [80, 0]);
+
+// An ordinary sale keeps its VAT and reports no statutory discount.
+const ordinary = computeTotals([{ unitPrice: 112, qty: 1 }], null, phSettings, null);
+check('an ordinary sale still carries VAT', [ordinary.tax, ordinary.vatExempt], [12, false]);
+check('and no statutory discount', ordinary.statutoryDiscount, 0);
+
 console.log(fail.length ? `\n${fail.length} FAILED` : "\nall checks passed");
 process.exit(fail.length ? 1 : 0);

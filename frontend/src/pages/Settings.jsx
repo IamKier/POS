@@ -166,6 +166,35 @@ export default function Settings() {
             ) : null}
           </Section>
 
+          <Section
+            title="Senior citizen and PWD discount"
+            hint="The statutory 20 percent, with the sale made VAT exempt. Philippine retail needs this on."
+          >
+            <Toggle
+              checked={settings.statutoryDiscount}
+              onChange={(v) => save({ statutoryDiscount: v })}
+              label="Offer the senior and PWD discount at the till"
+            />
+            {settings.statutoryDiscount ? (
+              <Field
+                label="Discount rate (%)"
+                hint="20 by law. Change it only if the law does."
+                className="mt-4 max-w-xs"
+              >
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={((settings.statutoryRate ?? 0.2) * 100).toFixed(0)}
+                  onChange={(e) =>
+                    save({ statutoryRate: (Number(e.target.value) || 0) / 100 })
+                  }
+                  className="tnum"
+                />
+              </Field>
+            ) : null}
+          </Section>
+
           <Section title="Inventory">
             <Field
               label="Low stock threshold"
