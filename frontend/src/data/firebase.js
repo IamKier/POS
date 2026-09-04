@@ -22,9 +22,10 @@ const config = {
 export const firebaseEnabled = Boolean(config.apiKey && config.projectId);
 
 let db = null;
+let app = null;
 
 if (firebaseEnabled) {
-  const app = initializeApp(config);
+  app = initializeApp(config);
 
   /**
    * persistentLocalCache is the whole reason Firestore suits a till.
@@ -40,4 +41,4 @@ if (firebaseEnabled) {
   });
 }
 
-export { db };
+export { app, db, config };

@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Search, TriangleAlert, X } from "lucide-react";
 import { usePos } from "../store/context.js";
+import { useAuth } from "../auth/context.js";
 import { Chip, SearchInput } from "../components/ui.jsx";
 import ProductGrid from "../components/ProductGrid.jsx";
 import CartPanel from "../components/CartPanel.jsx";
 import ModifierModal from "../components/ModifierModal.jsx";
 import PaymentModal from "../components/PaymentModal.jsx";
 import ReceiptModal from "../components/ReceiptModal.jsx";
+import ApprovalModal from "../components/ApprovalModal.jsx";
 
 export default function Sell() {
   const {
@@ -29,7 +31,10 @@ export default function Sell() {
   const [paying, setPaying] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [warning, setWarning] = useState("");
+  const [approval, setApproval] = useState(null);
+  const [discountApproved, setDiscountApproved] = useState(false);
   const searchRef = useRef(null);
+  const { isManager, user, profile } = useAuth();
 
   /* Checkout prepends the new sale, so the newest one is the one to show. */
   const receipt = showReceipt ? sales[0] : null;
@@ -93,6 +98,8 @@ export default function Sell() {
     setQuery("");
   }
 
+  /* Every sale carries who rang it up. Without that, a shortfall at
+     the end of a shift has nobody to ask about it. */
   function checkout(payment) {
     dispatch({
       type: "sale/checkout",
@@ -100,9 +107,13 @@ export default function Sell() {
       totals,
       payment,
       at: new Date().toISOString(),
+      cashier: user
+        ? { uid: user.uid, name: profile?.name ?? user.email }
+        : null,
     });
     setPaying(false);
     setShowReceipt(true);
+    setDiscountApproved(false);
   }
 
   const tablesMode = settings.serviceMode === "tables";
@@ -238,10 +249,31 @@ export default function Sell() {
           onNote={(note) =>
             dispatch({ type: "cart/setNote", tabId: activeTabId, note })
           }
-          onClear={() => dispatch({ type: "cart/clear", tabId: activeTabId })}
+          onClear={() => {
+            dispatch({ type: "cart/clear", tabId: activeTabId });
+            setDiscountApproved(false);
+          }}
           onCharge={() => setPaying(true)}
+          discountLocked={!isManager && !discountApproved}
+          onUnlockDiscount={() =>
+            setApproval({
+              action: "Apply a discount to this order",
+              run: () => setDiscountApproved(true),
+            })
+          }
         />
       </div>
+
+      {approval ? (
+        <ApprovalModal
+          action={approval.action}
+          onClose={() => setApproval(null)}
+          onApproved={() => {
+            approval.run();
+            setApproval(null);
+          }}
+        />
+      ) : null}
 
       {modifierFor ? (
         <ModifierModal

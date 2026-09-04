@@ -32,8 +32,16 @@ export default function Receipt({ sale, settings }) {
         <span>{sale.tabName}</span>
       </div>
       <div>{formatDateTime(sale.at)}</div>
+      {sale.cashier?.name ? <div>Cashier: {sale.cashier.name}</div> : null}
       {sale.status === "voided" ? (
-        <p className="mt-1 text-center text-sm font-bold">*** VOIDED ***</p>
+        <>
+          <p className="mt-1 text-center text-sm font-bold">*** VOIDED ***</p>
+          {sale.voidedBy?.name ? (
+            <p className="text-center text-[10px]">
+              Approved by {sale.voidedBy.name}
+            </p>
+          ) : null}
+        </>
       ) : null}
 
       <Divider />

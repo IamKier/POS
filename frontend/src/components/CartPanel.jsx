@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Minus, Percent, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { Lock, Minus, Percent, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import { Button, EmptyState, IconButton, Input } from "./ui.jsx";
 import { formatMoney } from "../lib/format.js";
 
@@ -13,6 +13,8 @@ export default function CartPanel({
   onNote,
   onClear,
   onCharge,
+  discountLocked,
+  onUnlockDiscount,
 }) {
   const [editingDiscount, setEditingDiscount] = useState(false);
   const currency = settings.currency;
@@ -114,10 +116,21 @@ export default function CartPanel({
 
           <div className="flex items-center justify-between gap-2">
             <button
-              onClick={() => setEditingDiscount((v) => !v)}
+              onClick={() =>
+                discountLocked ? onUnlockDiscount() : setEditingDiscount((v) => !v)
+              }
+              title={
+                discountLocked
+                  ? "A manager has to approve a discount"
+                  : undefined
+              }
               className="flex items-center gap-1 text-muted transition-colors hover:text-accent"
             >
-              <Percent className="size-3.5" />
+              {discountLocked ? (
+                <Lock className="size-3.5" />
+              ) : (
+                <Percent className="size-3.5" />
+              )}
               Discount
             </button>
             <span className="tnum text-ink">
@@ -125,7 +138,7 @@ export default function CartPanel({
             </span>
           </div>
 
-          {editingDiscount ? (
+          {editingDiscount && !discountLocked ? (
             <div className="flex items-center gap-2 pb-1">
               <div className="flex overflow-hidden rounded-card border border-line-strong">
                 {["percent", "amount"].map((type) => (

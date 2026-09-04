@@ -21,12 +21,27 @@ export function productOperation(before, after) {
     return { type: "set", path: "products", id: after.id, data: after };
   }
 
+  /**
+   * A sale touches nothing but the count, so it writes nothing but the
+   * count. Two things fall out of that. Security rules can let a
+   * cashier deduct stock without letting them touch a price, and a
+   * register holding a stale copy of the product cannot quietly revert
+   * an edit a manager made a second ago.
+   */
+  const onlyStock = Object.keys({ ...before, ...after }).every(
+    (key) => key === "stock" || same(before[key], after[key]),
+  );
+
   return {
     type: "set",
     path: "products",
     id: after.id,
     merge: true,
-    data: after,
+    data: onlyStock ? {} : after,
     stockDelta: round2(after.stock - before.stock),
   };
+}
+
+function same(a, b) {
+  return JSON.stringify(a) === JSON.stringify(b);
 }

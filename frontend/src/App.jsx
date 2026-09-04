@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Boxes,
+  LogOut,
   Monitor,
   Moon,
   Package,
@@ -10,6 +11,7 @@ import {
   ShoppingCart,
   Store,
   Sun,
+  Users,
 } from "lucide-react";
 import PosProvider from "./store/PosProvider.jsx";
 import { subscribeStatus } from "./data/cloudSync.js";
@@ -19,16 +21,21 @@ import Products from "./pages/Products.jsx";
 import Inventory from "./pages/Inventory.jsx";
 import Sales from "./pages/Sales.jsx";
 import Settings from "./pages/Settings.jsx";
+import Staff from "./pages/Staff.jsx";
+import Login from "./pages/Login.jsx";
+import AuthProvider from "./auth/AuthProvider.jsx";
+import { useAuth } from "./auth/context.js";
+import { signOutNow } from "./auth/authService.js";
 
 /**
  * No router on purpose. The app is a handful of full-screen views and a
  * cashier never deep-links into one, so a single piece of state keeps
  * the URL free for whatever needs it later.
  *
- * The two groups are the whole access model for now: Register is what a
- * cashier touches, Admin is everything that changes the catalog, the
- * stock or the money settings. Locking Admin behind a real login is the
- * next step once there is a backend to authenticate against.
+ * The two groups are the access model: Register is what a cashier
+ * touches, Admin is everything that changes the catalog, the stock or
+ * the money settings. A cashier never sees the Admin group, and the
+ * Firestore rules reject their writes even if they did.
  */
 const GROUPS = [
   {
@@ -42,12 +49,11 @@ const GROUPS = [
       { id: "products", label: "Products", icon: Package, Page: Products },
       { id: "inventory", label: "Inventory", icon: Boxes, Page: Inventory },
       { id: "sales", label: "Sales", icon: ReceiptText, Page: Sales },
+      { id: "staff", label: "Staff", icon: Users, Page: Staff },
       { id: "settings", label: "Settings", icon: SettingsIcon, Page: Settings },
     ],
   },
 ];
-
-const PAGES = GROUPS.flatMap((g) => g.items);
 
 const THEMES = [
   { id: "system", label: "System theme", icon: Monitor },
@@ -158,8 +164,15 @@ function ConnectionBadge() {
 
 function Shell() {
   const { settings } = usePos();
+  const { isManager } = useAuth();
   const [page, setPage] = useState("sell");
-  const current = PAGES.find((n) => n.id === page) ?? PAGES[0];
+
+  /* A cashier gets the register and nothing else. Hiding Admin is the
+     convenience; the security is in the Firestore rules, which reject
+     a cashier's write regardless of what the interface offers. */
+  const groups = isManager ? GROUPS : GROUPS.filter((g) => !g.admin);
+  const allowed = groups.flatMap((g) => g.items);
+  const current = allowed.find((n) => n.id === page) ?? allowed[0];
   const Page = current.Page;
 
   return (
@@ -178,7 +191,7 @@ function Shell() {
         </div>
 
         <div className="scroll-slim flex-1 overflow-y-auto px-2 py-2 lg:px-3">
-          {GROUPS.map((group) => (
+          {groups.map((group) => (
             <div key={group.label} className="mb-4">
               <p className="mb-1 hidden items-center gap-1.5 px-3 text-[11px] font-semibold tracking-wider text-muted uppercase lg:flex">
                 {group.admin ? <ShieldCheck className="size-3.5" /> : null}
@@ -211,6 +224,7 @@ function Shell() {
         </div>
 
         <div className="border-t border-line p-2 lg:p-3">
+          <SignedInAs />
           <ThemeToggle />
           <ConnectionBadge />
         </div>
@@ -223,10 +237,59 @@ function Shell() {
   );
 }
 
-export default function App() {
+function SignedInAs() {
+  const { user, profile, role, requiresAuth } = useAuth();
+  if (!requiresAuth || !user) return null;
+
+  return (
+    <div className="mb-2 border-b border-line pb-2">
+      <div className="hidden px-3 pb-2 lg:block">
+        <p className="truncate text-sm font-medium text-ink">
+          {profile?.name || user.email}
+        </p>
+        <p className="text-xs text-muted capitalize">{role}</p>
+      </div>
+      <button
+        onClick={() => signOutNow()}
+        title={`Signed in as ${profile?.name || user.email}. Sign out.`}
+        className="flex w-full items-center gap-3 rounded-card px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+      >
+        <LogOut className="size-5 shrink-0" />
+        <span className="hidden lg:block">Sign out</span>
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Auth wraps the till rather than the other way round: there is no
+ * point loading a register for someone who has not identified
+ * themselves, and every sale needs a name attached to it.
+ */
+function Gate() {
+  const { ready, user, requiresAuth } = useAuth();
+
+  if (!ready) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-canvas">
+        <p className="text-sm text-muted">Opening the register</p>
+      </div>
+    );
+  }
+
+  if (requiresAuth && !user) return <Login />;
+
   return (
     <PosProvider>
       <Shell />
     </PosProvider>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <Gate />
+    </AuthProvider>
   );
 }

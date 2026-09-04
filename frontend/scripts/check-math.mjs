@@ -127,9 +127,14 @@ const beforeProduct = { id: 'prd_cola', name: 'Cola', trackStock: true, stock: 4
 const afterProduct = { ...beforeProduct, stock: 3 };
 const op = productOperation(beforeProduct, afterProduct);
 check('stock change writes a merge, not a replace', op.merge, true);
+check('a sale writes the count and nothing else', Object.keys(op.data).length, 0);
 check('stock is sent as a delta, not an absolute count', op.stockDelta, -1);
 const renameOp = productOperation(beforeProduct, { ...beforeProduct, name: 'Cola 330ml' });
 check('a plain edit is still a whole write', renameOp.merge, undefined);
+
+const editAndSell = productOperation(beforeProduct, { ...beforeProduct, name: 'Cola 330ml', stock: 3 });
+check('an edit that also moves stock still sends the whole product', editAndSell.data.name, 'Cola 330ml');
+check('and still sends stock as a delta', editAndSell.stockDelta, -1);
 
 console.log(fail.length ? `\n${fail.length} FAILED` : "\nall checks passed");
 process.exit(fail.length ? 1 : 0);

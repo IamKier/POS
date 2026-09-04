@@ -1,65 +1,90 @@
 rules_version = '2';
 
 /**
- * NOT YET APPLIED. The project is still in test mode, which allows any
- * read and write from anyone holding the config, and that config ships
- * in the browser bundle of a public site. Test mode also expires on its
- * own after 30 days, at which point the till stops syncing.
+ * HOW TO APPLY, in this order. The order matters.
  *
- * Paste these rules into Firebase console > Firestore Database > Rules
- * once Authentication is switched on. They say: you must be signed in
- * to read or write anything, sales can be created and voided but never
- * deleted, and only a manager can change the catalog or the settings.
+ *   1. Firebase console > Authentication > Sign-in method > enable
+ *      Email/Password.
+ *   2. Open the app and create the owner account. It is the first
+ *      account, so it becomes a manager. Do this BEFORE step 3, while
+ *      test mode still allows the write.
+ *   3. Firebase console > Firestore Database > Rules, paste this file,
+ *      Publish.
  *
- * The manager check reads a custom claim, which is set with the Admin
- * SDK. Until that exists, drop the isManager() calls back to isStaff()
- * so a signed-in cashier can still work.
+ * Roles live in users/{uid}.role rather than in a custom auth claim,
+ * because claims can only be set by the Admin SDK, which needs a server
+ * and the paid plan. The rules below read that document, and only a
+ * manager can write to users, so a cashier cannot promote themselves.
  */
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isStaff() {
+    function signedIn() {
       return request.auth != null;
     }
 
+    function profile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
     function isManager() {
-      return isStaff() && request.auth.token.role == 'manager';
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && profile().role == 'manager';
     }
 
-    // Catalog: everyone signed in reads it, only a manager edits it.
-    match /products/{productId} {
-      allow read: if isStaff();
-      allow write: if isManager();
-    }
-
-    match /categories/{categoryId} {
-      allow read: if isStaff();
-      allow write: if isManager();
-    }
-
-    // Money settings, tax rate and receipt header.
-    match /config/{document} {
-      allow read: if isStaff();
+    /**
+     * Staff records. Everyone signed in can read the list, because the
+     * till shows who rang up a sale. Only a manager writes them, which
+     * is what stops a cashier editing their own role.
+     */
+    match /users/{uid} {
+      allow read: if signedIn();
       allow write: if isManager();
     }
 
     /**
-     * Sales are append-only on purpose. A cashier rings one up and a
-     * void writes a status change on top, but nothing removes the
-     * record. That is the difference between a sales history and an
-     * audit trail, and it is what an accountant will ask for.
+     * A manager owns the catalog. A cashier may change one field on it,
+     * the stock count, because that is what a sale does. Anything else
+     * on the product, price included, is rejected for them.
+     */
+    match /products/{productId} {
+      allow read: if signedIn();
+      allow create, delete: if isManager();
+      allow update: if isManager()
+        || (signedIn()
+            && request.resource.data.diff(resource.data)
+                 .affectedKeys().hasOnly(['stock']));
+    }
+
+    match /categories/{categoryId} {
+      allow read: if signedIn();
+      allow write: if isManager();
+    }
+
+    // Money settings, tax rate, receipt header.
+    match /config/{document} {
+      allow read: if signedIn();
+      allow write: if isManager();
+    }
+
+    /**
+     * Sales are append-only on purpose. A cashier rings one up, a void
+     * writes a status on top, and nothing removes the record. That is
+     * the difference between a sales history and an audit trail, and it
+     * is the first thing an accountant asks for.
      */
     match /sales/{saleId} {
-      allow read: if isStaff();
-      allow create: if isStaff();
-      allow update: if isStaff();
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update: if signedIn();
       allow delete: if false;
     }
 
     // Stock movements are the same: written, never rewritten.
     match /stockMoves/{moveId} {
-      allow read: if isStaff();
-      allow create: if isStaff();
+      allow read: if signedIn();
+      allow create: if signedIn();
       allow update, delete: if false;
     }
 

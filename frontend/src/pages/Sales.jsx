@@ -9,6 +9,8 @@ import {
   PageHeader,
 } from "../components/ui.jsx";
 import ReceiptModal from "../components/ReceiptModal.jsx";
+import ApprovalModal from "../components/ApprovalModal.jsx";
+import { useAuth } from "../auth/context.js";
 import DaySummaryModal from "../components/DaySummaryModal.jsx";
 import { summarize } from "../lib/report.js";
 import {
@@ -36,6 +38,8 @@ export default function Sales() {
   const [range, setRange] = useState("today");
   const [openSale, setOpenSale] = useState(null);
   const [showSummary, setShowSummary] = useState(false);
+  const [approval, setApproval] = useState(null);
+  const { isManager, user, profile } = useAuth();
 
   /* The clock is read once when the screen opens, so the range boundary
      does not shift underneath a report the cashier is reading. */
@@ -65,16 +69,37 @@ export default function Sales() {
         ? "Last 7 days"
         : "All time";
 
-  function voidSale(sale) {
-    const reason = window.prompt(`Reason for voiding ${sale.number}`);
-    if (reason === null) return;
+  function applyVoid(sale, reason, approvedBy) {
     dispatch({
       type: "sale/void",
       saleId: sale.id,
-      reason: reason.trim(),
+      reason,
       at: new Date().toISOString(),
+      by: approvedBy,
     });
     setOpenSale(null);
+  }
+
+  /* Voiding money needs a manager. A cashier can start one, but a
+     manager has to sign it off at the till, and the receipt records
+     which of them did. */
+  function voidSale(sale) {
+    const reason = window.prompt(`Reason for voiding ${sale.number}`);
+    if (reason === null) return;
+
+    const me = user
+      ? { uid: user.uid, name: profile?.name ?? user.email }
+      : null;
+
+    if (isManager) {
+      applyVoid(sale, reason.trim(), me);
+      return;
+    }
+
+    setApproval({
+      action: `Void ${sale.number}`,
+      run: (manager) => applyVoid(sale, reason.trim(), manager),
+    });
   }
 
   return (
@@ -221,6 +246,17 @@ export default function Sales() {
           settings={settings}
           onClose={() => setOpenSale(null)}
           onVoid={() => voidSale(openSale)}
+        />
+      ) : null}
+
+      {approval ? (
+        <ApprovalModal
+          action={approval.action}
+          onClose={() => setApproval(null)}
+          onApproved={(manager) => {
+            approval.run(manager);
+            setApproval(null);
+          }}
         />
       ) : null}
 

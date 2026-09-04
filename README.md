@@ -78,11 +78,42 @@ and the write goes out behind it.
 Open carts and tabs are deliberately not synced. A cart belongs to the terminal holding
 it, and two registers should not fight over one customer's basket.
 
-**Security is not done.** The project is in test mode, which allows anyone with the
-config to read and write, and expires after 30 days. [firestore.rules](firestore.rules)
-holds the replacement, to apply once Authentication is on. It makes sales and stock
-movements append-only, which is the difference between a sales history and an audit
-trail. Do not put real business data in until those rules are applied.
+## Staff, roles and locking it down
+
+Sign-in is Firebase Auth with email and password. With no Firebase config the app runs
+open, so a local clone is never locked out of its own demo.
+
+The first account created is the owner and becomes a **manager**. Everyone after that is
+created by a manager from Admin → Staff, on a second Firebase app instance so creating an
+account does not sign the manager out of their own register mid-shift.
+
+| | Cashier | Manager |
+|---|---|---|
+| Sell, take payment, print | yes | yes |
+| See the Admin section | no | yes |
+| Edit catalog, prices, settings, roles | no | yes |
+| Void a sale, apply a discount | with manager approval at the till | yes |
+
+Approval is a manager entering their own credentials on the register. It runs on a
+separate auth session, so the cashier stays signed in, and the approving manager is
+recorded on the void. Every sale carries the cashier who rang it up, and the receipt
+prints it.
+
+Roles live in `users/{uid}.role`, not in a custom auth claim, because claims can only be
+set by the Admin SDK, which needs a server and the paid plan. Security rules read that
+document, and only a manager can write to `users`, so a cashier cannot promote themselves.
+
+**Applying the rules, in this order.** [firestore.rules](firestore.rules) is written but
+not applied, and the project is still in test mode, which allows anyone with the config to
+read and write, and expires 30 days after 3 September 2026.
+
+1. Firebase console → Authentication → Sign-in method → enable **Email/Password**
+2. Open the app and **create the owner account**, while test mode still allows the write
+3. Firestore Database → Rules → paste the file → Publish
+
+The rules make sales and stock movements append-only, and let a cashier change exactly one
+field on a product, the stock count, because that is what a sale does. Their price is not
+theirs to touch.
 
 ## Where the data lives
 

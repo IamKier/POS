@@ -156,7 +156,7 @@ export function reducer(state, action) {
 
     /* --------------------------- checkout --------------------------- */
     case "sale/checkout": {
-      const { tabId, totals, payment, at } = action;
+      const { tabId, totals, payment, at, cashier } = action;
       const cart = cartOf(state, tabId);
       if (!cart.items.length) return state;
 
@@ -166,6 +166,7 @@ export function reducer(state, action) {
         number: saleNumber(state.terminal, state.saleCounter),
         at,
         tabName: tab?.name ?? "Walk-in",
+        cashier: cashier ?? null,
         note: cart.note,
         items: cart.items.map((l) => ({ ...l })),
         discountRule: cart.discount,
@@ -229,6 +230,7 @@ export function reducer(state, action) {
                 status: "voided",
                 voidedAt: action.at,
                 voidReason: action.reason,
+                voidedBy: action.by ?? null,
               }
             : s,
         ),
