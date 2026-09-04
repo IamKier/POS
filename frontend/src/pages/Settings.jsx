@@ -9,6 +9,7 @@ import {
   Textarea,
   Toggle,
 } from "../components/ui.jsx";
+import PaymentQrField from "../components/PaymentQrField.jsx";
 
 const CURRENCIES = ["PHP", "USD", "EUR", "SGD"];
 
@@ -164,6 +165,22 @@ export default function Settings() {
                 </ul>
               </div>
             ) : null}
+          </Section>
+
+          <Section
+            title="Payment QR"
+            hint="Shown to the customer at checkout for GCash, Maya and QR Ph."
+          >
+            <PaymentQrField
+              value={settings.paymentQr ?? ""}
+              onChange={(paymentQr) => save({ paymentQr })}
+            />
+            <p className="mt-4 text-xs text-muted">
+              Nothing here talks to GCash or a bank. The customer scans, shows
+              you their confirmation, and the cashier records the reference
+              against the sale. Automatic confirmation needs a merchant account
+              and a server to receive the webhook.
+            </p>
           </Section>
 
           <Section

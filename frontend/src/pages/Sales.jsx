@@ -13,6 +13,7 @@ import ApprovalModal from "../components/ApprovalModal.jsx";
 import { useAuth } from "../auth/context.js";
 import DaySummaryModal from "../components/DaySummaryModal.jsx";
 import { summarize } from "../lib/report.js";
+import { tenderLabel } from "../lib/payments.js";
 import {
   dayKey,
   formatMoney,
@@ -26,12 +27,6 @@ const RANGES = [
   { id: "week", label: "Last 7 days" },
   { id: "all", label: "All time" },
 ];
-
-const METHOD_LABEL = {
-  cash: "Cash",
-  card: "Card",
-  ewallet: "E-wallet",
-};
 
 export default function Sales() {
   const { dispatch, sales, settings, productById, categoryById } = usePos();
@@ -149,7 +144,7 @@ export default function Sales() {
                 {Object.entries(summary.byMethod).map(([method, value]) => (
                   <Row
                     key={method}
-                    label={METHOD_LABEL[method] ?? method}
+                    label={tenderLabel(method)}
                     value={money(value)}
                   />
                 ))}
@@ -227,7 +222,7 @@ export default function Sales() {
                       {sale.itemCount}
                     </td>
                     <td className="hidden px-4 py-3 text-muted sm:table-cell">
-                      {METHOD_LABEL[sale.payment.method] ?? sale.payment.method}
+                      {tenderLabel(sale.payment.method)}
                     </td>
                     <td
                       className={`tnum px-4 py-3 text-right font-semibold ${

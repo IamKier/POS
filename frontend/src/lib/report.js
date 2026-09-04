@@ -36,8 +36,29 @@ export function summarize(sales, productById, categoryById) {
       vatExemptSales += sale.total;
     }
 
-    const method = sale.payment.method;
-    byMethod[method] = round2((byMethod[method] ?? 0) + sale.total);
+    /**
+     * A split payment has to land in the drawer report as its parts,
+     * not as one lump under "split". Counting 200 cash and 140 GCash as
+     * 340 of anything makes the cash count at close impossible to
+     * reconcile.
+     */
+    const tenders = sale.payment.tenders ?? [
+      /* A sale from before split payments records what was handed over
+         in `tendered`, so the change subtraction below stays correct
+         for it too. */
+      {
+        method: sale.payment.method,
+        amount: sale.payment.tendered ?? sale.total,
+      },
+    ];
+    for (const tender of tenders) {
+      const key = tender.method;
+      byMethod[key] = round2((byMethod[key] ?? 0) + (Number(tender.amount) || 0));
+    }
+    /* Change comes back out of the drawer, so cash taken is net of it. */
+    if (sale.payment.change > 0 && byMethod.cash !== undefined) {
+      byMethod.cash = round2(byMethod.cash - sale.payment.change);
+    }
 
     for (const line of sale.items) {
       const lineValue = line.unitPrice * line.qty;

@@ -216,3 +216,49 @@ booklet the customer signs. The day summary reports the discount total, the numb
 sales, and VAT-exempt sales separately, because the exemption is declared separately.
 
 Turn it off in Settings for a shop outside the Philippines.
+
+## Scanning
+
+Two paths, because a shop counter and a phone are different problems.
+
+**Professional scanners.** A USB or Bluetooth barcode scanner is an HID keyboard: it types
+the code and presses Enter. Nothing to install. The catch is that a keyboard types into
+whatever has focus, so [hardwareScanner.js](frontend/src/lib/hardwareScanner.js) listens
+globally instead and works without clicking the search box first. It tells a scan from a
+person typing by speed: a scanner emits characters a few milliseconds apart, a fast typist
+manages about 80. It stands down while a modal is open, so a scan cannot drop an item into
+a cart mid-payment. It also fills the barcode field in the product editor, which is how a
+catalog gets built quickly.
+
+**Phone camera.** Chrome on Android has `BarcodeDetector` built in, which is instant and
+free. Safari and Firefox do not, so those lazy-load ZXing the first time a camera opens,
+as a plain JavaScript chunk the service worker precaches. A WebAssembly decoder would have
+been smaller but fetches its `.wasm` at runtime, which is the wrong trade for a till that
+has to scan offline. Camera scanning needs HTTPS, which Vercel provides.
+
+The camera is used in three places: scanning items into the cart, capturing a barcode in
+the product editor, and reading the QR off a customer's payment confirmation so a disputed
+GCash payment has something to check against.
+
+Every receipt also prints a QR of its number, total and time, so a return or a reprint is
+a scan rather than a search through a list.
+
+## Payments
+
+Cash, card, GCash, Maya, QR Ph and bank transfer, and **split payment** across any
+combination of them: 200 in cash and the rest on GCash is one sale with two tenders.
+
+For the QR methods, your own code (uploaded in Settings, downscaled on upload because
+settings sync to a Firestore document with a 1MB ceiling) is shown full size for the
+customer to scan. The cashier confirms their screen and records the reference.
+
+Only cash can overpay, and the excess is change. Nobody hands back change for an overpaid
+card tap, and `npm run check` asserts that, along with the rule that matters for a cash
+count: **the drawer report sees the parts, not the lump.** A 200 cash plus 140 GCash sale
+files 200 under cash and 140 under GCash, net of any change given, because counting 340 of
+anything makes the drawer impossible to reconcile at close.
+
+**There is no payment gateway.** Nothing here talks to GCash, Maya or a bank, so no
+payment is confirmed automatically. That needs a merchant account, a registered business,
+and a server to receive the webhook that says the money arrived. Everything up to that line
+is built; the line itself is not crossed.

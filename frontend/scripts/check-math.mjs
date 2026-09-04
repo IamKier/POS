@@ -2,6 +2,7 @@ import { reducer, initialState } from "../src/store/reducer.js";
 import { computeTotals } from "../src/lib/cart.js";
 import { summarize } from "../src/lib/report.js";
 import { productOperation } from "../src/lib/syncOps.js";
+import { paymentSummary } from "../src/lib/payments.js";
 
 const fail = [];
 const check = (label, got, want) => {
@@ -175,6 +176,71 @@ check('exclusive pricing: 20 percent off, no tax added', [exclusiveSenior.total,
 const ordinary = computeTotals([{ unitPrice: 112, qty: 1 }], null, phSettings, null);
 check('an ordinary sale still carries VAT', [ordinary.tax, ordinary.vatExempt], [12, false]);
 check('and no statutory discount', ordinary.statutoryDiscount, 0);
+
+
+// --- split payments and the drawer --------------------------------------
+// A customer pays 200 cash and 140 GCash on a 340 sale.
+const split = paymentSummary(
+  [
+    { method: "cash", amount: 200 },
+    { method: "gcash", amount: 140, reference: "4821" },
+  ],
+  340,
+);
+check("a split payment settles", split.settled, true);
+check("nothing is left owing", split.remaining, 0);
+check("no change on an exact split", split.change, 0);
+check("two tenders report as split", split.method, "split");
+
+// Overpaying in cash gives change; overpaying on a card does not.
+const overCash = paymentSummary([{ method: "cash", amount: 500 }], 340);
+check("cash overpayment becomes change", overCash.change, 160);
+const overCard = paymentSummary([{ method: "card", amount: 500 }], 340);
+check("a card overpayment is never change", overCard.change, 0);
+
+// Part paid is not settled.
+const partial = paymentSummary([{ method: "cash", amount: 100 }], 340);
+check("a part payment does not settle", [partial.settled, partial.remaining], [false, 240]);
+
+// The drawer report must see the parts, not the lump, or the cash count
+// at close cannot be reconciled.
+const splitSale = {
+  id: "s1",
+  number: "T1-00001",
+  at: new Date().toISOString(),
+  status: "completed",
+  subtotal: 340,
+  discount: 0,
+  tax: 0,
+  total: 340,
+  itemCount: 2,
+  items: [],
+  payment: {
+    method: "split",
+    change: 0,
+    tenders: [
+      { method: "cash", amount: 200 },
+      { method: "gcash", amount: 140 },
+    ],
+  },
+};
+const drawer = summarize([splitSale], {}, {});
+check("the drawer sees the cash part", drawer.byMethod.cash, 200);
+check("and the e-wallet part separately", drawer.byMethod.gcash, 140);
+check("and nothing filed under split", drawer.byMethod.split, undefined);
+
+// Change leaves the drawer, so cash taken is net of it.
+const changeSale = {
+  ...splitSale,
+  id: "s2",
+  payment: {
+    method: "cash",
+    change: 160,
+    tenders: [{ method: "cash", amount: 500 }],
+  },
+};
+const drawer2 = summarize([changeSale], {}, {});
+check("cash in the drawer is net of change given", drawer2.byMethod.cash, 340);
 
 console.log(fail.length ? `\n${fail.length} FAILED` : "\nall checks passed");
 process.exit(fail.length ? 1 : 0);

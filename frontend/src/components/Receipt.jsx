@@ -1,10 +1,7 @@
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import { formatMoney, formatDateTime } from "../lib/format.js";
-
-const METHOD_LABEL = {
-  cash: "Cash",
-  card: "Card",
-  ewallet: "E-wallet",
-};
+import { tenderLabel } from "../lib/payments.js";
 
 /**
  * Rendered at 80mm width so what shows on screen is what a thermal
@@ -102,15 +99,23 @@ export default function Receipt({ sale, settings }) {
 
       <Divider />
 
-      <Row
-        label={METHOD_LABEL[sale.payment.method] ?? sale.payment.method}
-        value={money(sale.payment.tendered)}
-      />
-      {sale.payment.method === "cash" ? (
+      {/* Older sales predate split payments and have a single method. */}
+      {(sale.payment.tenders ?? [
+        {
+          method: sale.payment.method,
+          amount: sale.payment.tendered,
+          reference: sale.payment.reference,
+        },
+      ]).map((tender, i) => (
+        <div key={i}>
+          <Row label={tenderLabel(tender.method)} value={money(tender.amount)} />
+          {tender.reference ? (
+            <div className="pl-2 text-[10px]">Ref: {tender.reference}</div>
+          ) : null}
+        </div>
+      ))}
+      {sale.payment.change > 0 ? (
         <Row label="Change" value={money(sale.payment.change)} />
-      ) : null}
-      {sale.payment.reference ? (
-        <Row label="Reference" value={sale.payment.reference} />
       ) : null}
 
       {sale.customer ? (
@@ -127,10 +132,53 @@ export default function Receipt({ sale, settings }) {
 
       {sale.note ? <p className="mt-2">Note: {sale.note}</p> : null}
 
+      <ReceiptQr sale={sale} />
+
       <p className="mt-3 text-center">{settings.receiptFooter}</p>
       <p className="mt-1 text-center text-[10px]">
         This document is not an official receipt.
       </p>
+    </div>
+  );
+}
+
+/**
+ * Encodes the receipt number, total and time. Scanning it beats reading
+ * a number off a faded thermal print when someone comes back with a
+ * return, and it is generated on the device, so it works with no
+ * connection like everything else on this receipt.
+ */
+function ReceiptQr({ sale }) {
+  const [svg, setSvg] = useState("");
+
+  useEffect(() => {
+    let live = true;
+    const payload = ["POS", sale.number, sale.total, sale.at].join("|");
+    QRCode.toString(payload, {
+      type: "svg",
+      margin: 0,
+      errorCorrectionLevel: "M",
+    })
+      .then((out) => {
+        if (live) setSvg(out);
+      })
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, [sale.number, sale.total, sale.at]);
+
+  if (!svg) return null;
+
+  return (
+    <div className="mt-3 flex flex-col items-center">
+      <div
+        className="w-24"
+        role="img"
+        aria-label={`QR code for receipt ${sale.number}`}
+        dangerouslySetInnerHTML={{ __html: svg }}
+      />
+      <p className="mt-1 text-[10px]">{sale.number}</p>
     </div>
   );
 }

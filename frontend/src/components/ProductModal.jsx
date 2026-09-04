@@ -1,7 +1,10 @@
-import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Camera, Plus, Trash2 } from "lucide-react";
 import { Button, Field, Input, Modal, Select, Toggle } from "./ui.jsx";
 import { uid } from "../lib/format.js";
+import ScannerModal from "./ScannerModal.jsx";
+import { cameraSupported } from "../lib/scanner.js";
+import { listenForScans } from "../lib/hardwareScanner.js";
 
 const BLANK = {
   name: "",
@@ -24,8 +27,18 @@ export default function ProductModal({ product, categories, onClose, onSave }) {
     modifierGroups: structuredClone(product?.modifierGroups ?? []),
   }));
   const [error, setError] = useState("");
+  const [scanning, setScanning] = useState(false);
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+
+  /* Building a catalog means typing hundreds of 13-digit numbers, or
+     pulling the trigger on a scanner while this form is open. */
+  useEffect(() => {
+    if (scanning) return undefined;
+    return listenForScans({
+      onScan: (barcode) => setForm((f) => ({ ...f, barcode })),
+    });
+  }, [scanning]);
 
   function updateGroup(groupId, patch) {
     set({
@@ -156,12 +169,30 @@ export default function ProductModal({ product, categories, onClose, onSave }) {
             />
           </Field>
 
-          <Field label="Barcode" className="sm:col-span-2">
-            <Input
-              value={form.barcode}
-              onChange={(e) => set({ barcode: e.target.value })}
-              placeholder="4800000000011"
-            />
+          <Field
+            label="Barcode"
+            className="sm:col-span-2"
+            hint="Pull the trigger on a USB or Bluetooth scanner and it lands here."
+          >
+            <div className="flex items-center gap-2">
+              <Input
+                value={form.barcode}
+                onChange={(e) => set({ barcode: e.target.value })}
+                placeholder="4800000000011"
+                className="font-mono"
+              />
+              {cameraSupported() ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => setScanning(true)}
+                >
+                  <Camera className="size-4" />
+                  <span className="hidden sm:inline">Scan</span>
+                </Button>
+              ) : null}
+            </div>
           </Field>
         </div>
 
@@ -311,6 +342,18 @@ export default function ProductModal({ product, categories, onClose, onSave }) {
           </div>
         </section>
       </div>
+
+      {scanning ? (
+        <ScannerModal
+          title="Scan the barcode"
+          subtitle="Point at the code on the packaging"
+          onScan={(barcode) => {
+            set({ barcode });
+            setScanning(false);
+          }}
+          onClose={() => setScanning(false)}
+        />
+      ) : null}
     </Modal>
   );
 }

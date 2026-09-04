@@ -1,12 +1,7 @@
 import { Printer } from "lucide-react";
 import { Button, Modal } from "./ui.jsx";
 import { formatMoney, formatDateTime } from "../lib/format.js";
-
-const METHOD_LABEL = {
-  cash: "Cash",
-  card: "Card",
-  ewallet: "E-wallet",
-};
+import { tenderLabel } from "../lib/payments.js";
 
 /** A cash-up sheet: what was sold, how it was paid, what was voided. */
 export default function DaySummaryModal({ summary, settings, rangeLabel, onClose }) {
@@ -73,7 +68,7 @@ export default function DaySummaryModal({ summary, settings, rangeLabel, onClose
             Object.entries(summary.byMethod).map(([method, value]) => (
               <Row
                 key={method}
-                label={METHOD_LABEL[method] ?? method}
+                label={tenderLabel(method)}
                 value={money(value)}
               />
             ))

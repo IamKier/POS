@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Search, TriangleAlert, X } from "lucide-react";
+import { Camera, Plus, Search, TriangleAlert, X } from "lucide-react";
 import { usePos } from "../store/context.js";
 import { useAuth } from "../auth/context.js";
 import { Chip, SearchInput } from "../components/ui.jsx";
@@ -10,6 +10,9 @@ import PaymentModal from "../components/PaymentModal.jsx";
 import ReceiptModal from "../components/ReceiptModal.jsx";
 import ApprovalModal from "../components/ApprovalModal.jsx";
 import CustomerDiscountModal from "../components/CustomerDiscountModal.jsx";
+import ScannerModal from "../components/ScannerModal.jsx";
+import { listenForScans } from "../lib/hardwareScanner.js";
+import { cameraSupported } from "../lib/scanner.js";
 
 export default function Sell() {
   const {
@@ -35,6 +38,7 @@ export default function Sell() {
   const [approval, setApproval] = useState(null);
   const [discountApproved, setDiscountApproved] = useState(false);
   const [customerDiscountOpen, setCustomerDiscountOpen] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const searchRef = useRef(null);
   const { isManager, user, profile } = useAuth();
 
@@ -46,6 +50,28 @@ export default function Sell() {
     const t = setTimeout(() => setWarning(""), 2600);
     return () => clearTimeout(t);
   }, [warning]);
+
+  /* The handler closes over the catalog, so it changes every render.
+     Keeping it in a ref means the global key listener is attached once
+     rather than torn down and rebuilt constantly. */
+  const latestHandler = useRef(null);
+  useEffect(() => {
+    latestHandler.current = handleCode;
+  });
+
+  /**
+   * A USB or Bluetooth scanner types wherever the focus is, so this
+   * listens globally and works without clicking the search box first.
+   * It stands down while a modal is open, so a scan cannot drop an item
+   * into a cart the cashier is halfway through paying for.
+   */
+  const modalOpen = Boolean(
+    modifierFor || paying || showReceipt || approval || customerDiscountOpen || scanning,
+  );
+  useEffect(() => {
+    if (modalOpen) return undefined;
+    return listenForScans({ onScan: (code) => latestHandler.current?.(code) });
+  }, [modalOpen]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -83,21 +109,29 @@ export default function Sell() {
     addToCart(product);
   }
 
-  /* Barcode scanners type the code and press Enter. */
-  function onSearchKeyDown(e) {
-    if (e.key !== "Enter") return;
-    const q = query.trim().toLowerCase();
+  /**
+   * One path for every scan, whichever device produced it: a USB or
+   * Bluetooth scanner, the phone camera, or someone typing a code and
+   * pressing Enter.
+   */
+  function handleCode(raw) {
+    const q = String(raw).trim().toLowerCase();
     if (!q) return;
     const exact = products.find(
       (p) => p.active && (p.barcode === q || p.sku.toLowerCase() === q),
     );
     const target = exact ?? (visible.length === 1 ? visible[0] : null);
     if (!target) {
-      setWarning("No product matches that code.");
+      setWarning(`Nothing matches ${q}.`);
       return;
     }
     pick(target);
     setQuery("");
+  }
+
+  function onSearchKeyDown(e) {
+    if (e.key !== "Enter") return;
+    handleCode(query);
   }
 
   /* Every sale carries who rang it up. Without that, a shortfall at
@@ -151,6 +185,17 @@ export default function Sell() {
                 </button>
               ) : null}
             </div>
+
+            {cameraSupported() ? (
+              <button
+                onClick={() => setScanning(true)}
+                title="Scan with the camera"
+                className="flex h-10 shrink-0 items-center gap-2 rounded-card border border-line-strong bg-surface px-3 text-sm font-medium text-ink transition-colors hover:bg-surface-2"
+              >
+                <Camera className="size-4" />
+                <span className="hidden sm:inline">Scan</span>
+              </button>
+            ) : null}
           </header>
 
           {tablesMode ? (
@@ -267,6 +312,19 @@ export default function Sell() {
         />
       </div>
 
+      {scanning ? (
+        <ScannerModal
+          title="Scan into the cart"
+          subtitle="Keep scanning to add more items"
+          continuous
+          onScan={handleCode}
+          onClose={() => {
+            setScanning(false);
+            searchRef.current?.focus();
+          }}
+        />
+      ) : null}
+
       {customerDiscountOpen ? (
         <CustomerDiscountModal
           items={activeCart.items}
@@ -310,7 +368,7 @@ export default function Sell() {
       {paying ? (
         <PaymentModal
           totals={totals}
-          currency={settings.currency}
+          settings={settings}
           onClose={() => setPaying(false)}
           onConfirm={checkout}
         />
