@@ -1,6 +1,7 @@
 import { reducer, initialState } from "../src/store/reducer.js";
 import { computeTotals } from "../src/lib/cart.js";
 import { summarize } from "../src/lib/report.js";
+import { productOperation } from "../src/lib/syncOps.js";
 
 const fail = [];
 const check = (label, got, want) => {
@@ -53,7 +54,7 @@ s = reducer(s, {
   payment: { method: "cash", tendered: 500, change: 198.5, reference: "" },
 });
 check("sale recorded", s.sales.length, 1);
-check("sale number", s.sales[0].number, "S-00001");
+check("sale number carries the terminal code", s.sales[0].number, `${s.terminal.code}-00001`);
 check("cart cleared after checkout", s.carts[tabId].items.length, 0);
 check("discount rule cleared", s.carts[tabId].discount, { type: "percent", value: 0 });
 check("tracked stock deducted", s.products.find((p) => p.id === "prd_cola").stock, 1);
@@ -93,6 +94,42 @@ const overshoot = computeTotals(
   { taxRate: 0.12, taxInclusive: true },
 );
 check("discount clamps at the subtotal", [overshoot.discount, overshoot.total], [50, 0]);
+
+
+// --- multi-device correctness -------------------------------------------
+
+// Two registers, each with its own code, must never collide on a number.
+let t1 = initialState();
+let t2 = initialState();
+t2 = reducer(t2, { type: 'terminal/setCode', code: 'T2' });
+t1 = reducer(t1, { type: 'terminal/setCode', code: 'T1' });
+const ring = (st) => {
+  const cola = st.products.find((p) => p.id === 'prd_cola');
+  st = reducer(st, { type: 'cart/add', tabId: 'tab_walkin', product: cola, qty: 1 });
+  const tot = computeTotals(st.carts.tab_walkin.items, st.carts.tab_walkin.discount, st.settings);
+  return reducer(st, {
+    type: 'sale/checkout',
+    tabId: 'tab_walkin',
+    totals: tot,
+    at: new Date().toISOString(),
+    payment: { method: 'cash', tendered: 50, change: 5, reference: '' },
+  });
+};
+t1 = ring(t1);
+t2 = ring(t2);
+check('register one numbers its own receipts', t1.sales[0].number, 'T1-00001');
+check('register two does not reuse that number', t2.sales[0].number, 'T2-00001');
+check('two registers, two distinct numbers', t1.sales[0].number !== t2.sales[0].number, true);
+
+// A sale must send a stock delta, not an absolute count, or two tills
+// selling the last units overwrite each other.
+const beforeProduct = { id: 'prd_cola', name: 'Cola', trackStock: true, stock: 4 };
+const afterProduct = { ...beforeProduct, stock: 3 };
+const op = productOperation(beforeProduct, afterProduct);
+check('stock change writes a merge, not a replace', op.merge, true);
+check('stock is sent as a delta, not an absolute count', op.stockDelta, -1);
+const renameOp = productOperation(beforeProduct, { ...beforeProduct, name: 'Cola 330ml' });
+check('a plain edit is still a whole write', renameOp.merge, undefined);
 
 console.log(fail.length ? `\n${fail.length} FAILED` : "\nall checks passed");
 process.exit(fail.length ? 1 : 0);

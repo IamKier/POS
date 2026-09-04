@@ -1,10 +1,12 @@
 import {
   collection,
   doc,
+  increment,
   onSnapshot,
   writeBatch,
 } from "firebase/firestore";
 import { db, firebaseEnabled } from "./firebase.js";
+import { productOperation } from "../lib/syncOps.js";
 
 /**
  * Firestore sync, layered on top of the local state rather than
@@ -78,8 +80,18 @@ async function commit(operations) {
   for (let i = 0; i < operations.length; i += BATCH_LIMIT) {
     const batch = writeBatch(db);
     for (const op of operations.slice(i, i + BATCH_LIMIT)) {
-      if (op.type === "set") batch.set(doc(db, op.path, op.id), op.data);
-      else batch.delete(doc(db, op.path, op.id));
+      const ref = doc(db, op.path, op.id);
+      if (op.type === "delete") {
+        batch.delete(ref);
+      } else if (op.merge) {
+        const data =
+          op.stockDelta === undefined
+            ? op.data
+            : { ...op.data, stock: increment(op.stockDelta) };
+        batch.set(ref, data, { merge: true });
+      } else {
+        batch.set(ref, op.data);
+      }
     }
     await batch.commit();
   }
@@ -96,9 +108,12 @@ export async function pushToCloud(prev, next) {
     const after = indexById(next[slice]);
 
     for (const [id, item] of Object.entries(after)) {
-      if (!same(before[id], item)) {
-        operations.push({ type: "set", path, id, data: item });
-      }
+      if (same(before[id], item)) continue;
+      operations.push(
+        slice === "products"
+          ? productOperation(before[id], item)
+          : { type: "set", path, id, data: item },
+      );
     }
     for (const id of Object.keys(before)) {
       if (!after[id]) operations.push({ type: "delete", path, id });

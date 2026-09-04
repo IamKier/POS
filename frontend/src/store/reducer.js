@@ -13,6 +13,26 @@ function emptyCart() {
   return { items: [], discount: { type: "percent", value: 0 }, note: "" };
 }
 
+/**
+ * Every register gets its own code, and receipt numbers carry it. This
+ * is how tills have always numbered receipts, and the reason is that
+ * the alternative does not survive a POS: a single shared counter would
+ * need a transaction against the server on every sale, so the moment
+ * the internet drops, the register cannot issue a receipt at all. A
+ * per-terminal sequence is unique without anyone coordinating, and
+ * keeps working with the cable unplugged.
+ *
+ * The code is random so two devices never collide out of the box, and
+ * editable in Settings so a shop can use T1, T2, COUNTER1 instead. It
+ * is deliberately local to the device and never synced.
+ */
+function newTerminal() {
+  return {
+    id: uid("term"),
+    code: "T" + Math.random().toString(36).slice(2, 6).toUpperCase(),
+  };
+}
+
 export function initialState() {
   return {
     settings: { ...defaultSettings },
@@ -24,6 +44,7 @@ export function initialState() {
     sales: [],
     stockMoves: [],
     saleCounter: 1,
+    terminal: newTerminal(),
   };
 }
 
@@ -35,8 +56,8 @@ function withCart(state, tabId, cart) {
   return { ...state, carts: { ...state.carts, [tabId]: cart } };
 }
 
-function saleNumber(n) {
-  return "S-" + String(n).padStart(5, "0");
+function saleNumber(terminal, n) {
+  return `${terminal?.code ?? "T"}-${String(n).padStart(5, "0")}`;
 }
 
 function applyStock(products, productId, delta) {
@@ -142,7 +163,7 @@ export function reducer(state, action) {
       const tab = state.tabs.find((t) => t.id === tabId);
       const sale = {
         id: uid("sale"),
-        number: saleNumber(state.saleCounter),
+        number: saleNumber(state.terminal, state.saleCounter),
         at,
         tabName: tab?.name ?? "Walk-in",
         note: cart.note,
@@ -265,6 +286,14 @@ export function reducer(state, action) {
         ],
       };
     }
+
+    /* Local to this device, never synced: it is what makes this
+       register's receipt numbers distinct from the next one's. */
+    case "terminal/setCode":
+      return {
+        ...state,
+        terminal: { ...state.terminal, code: action.code },
+      };
 
     /* --------------------------- settings --------------------------- */
     case "settings/save":

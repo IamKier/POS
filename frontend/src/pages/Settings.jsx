@@ -13,7 +13,7 @@ import {
 const CURRENCIES = ["PHP", "USD", "EUR", "SGD"];
 
 export default function Settings() {
-  const { dispatch, settings, tabs, carts } = usePos();
+  const { dispatch, settings, tabs, carts, terminal } = usePos();
   const save = (patch) => dispatch({ type: "settings/save", patch });
 
   return (
@@ -181,6 +181,31 @@ export default function Settings() {
                   save({ lowStockThreshold: Number(e.target.value) || 0 })
                 }
                 className="tnum"
+              />
+            </Field>
+          </Section>
+
+          <Section
+            title="This register"
+            hint="Local to this device. It is not shared with the others."
+          >
+            <Field
+              label="Terminal code"
+              hint={`Every receipt from this device is numbered ${terminal?.code ?? "T"}-00001, ${terminal?.code ?? "T"}-00002 and so on. Give each register a different code (T1, T2, COUNTER1) so two of them can never issue the same receipt number, including while offline.`}
+              className="max-w-xs"
+            >
+              <Input
+                value={terminal?.code ?? ""}
+                onChange={(e) =>
+                  dispatch({
+                    type: "terminal/setCode",
+                    code: e.target.value
+                      .toUpperCase()
+                      .replace(/[^A-Z0-9-]/g, "")
+                      .slice(0, 8),
+                  })
+                }
+                className="font-mono tracking-wider"
               />
             </Field>
           </Section>
