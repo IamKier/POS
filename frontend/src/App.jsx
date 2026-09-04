@@ -12,6 +12,7 @@ import {
   Store,
   Sun,
   Users,
+  Wallet,
 } from "lucide-react";
 import PosProvider from "./store/PosProvider.jsx";
 import { subscribeStatus } from "./data/cloudSync.js";
@@ -22,6 +23,7 @@ import Inventory from "./pages/Inventory.jsx";
 import Sales from "./pages/Sales.jsx";
 import Settings from "./pages/Settings.jsx";
 import Staff from "./pages/Staff.jsx";
+import Shifts from "./pages/Shifts.jsx";
 import Login from "./pages/Login.jsx";
 import AuthProvider from "./auth/AuthProvider.jsx";
 import { useAuth } from "./auth/context.js";
@@ -49,6 +51,7 @@ const GROUPS = [
       { id: "products", label: "Products", icon: Package, Page: Products },
       { id: "inventory", label: "Inventory", icon: Boxes, Page: Inventory },
       { id: "sales", label: "Sales", icon: ReceiptText, Page: Sales },
+      { id: "shifts", label: "Shifts", icon: Wallet, Page: Shifts },
       { id: "staff", label: "Staff", icon: Users, Page: Staff },
       { id: "settings", label: "Settings", icon: SettingsIcon, Page: Settings },
     ],

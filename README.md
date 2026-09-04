@@ -262,3 +262,36 @@ anything makes the drawer impossible to reconcile at close.
 payment is confirmed automatically. That needs a merchant account, a registered business,
 and a server to receive the webhook that says the money arrived. Everything up to that line
 is built; the line itself is not crossed.
+
+## Shifts and the drawer
+
+A shift belongs to one person at one register. With "a shift must be open before selling"
+on (Settings, default), the till will not sell until someone has counted a float into the
+drawer, and every sale from then carries that shift.
+
+**Expected cash is the float plus cash taken, less change given.** Card and e-wallet
+takings are deliberately excluded: that money never touched the drawer, so holding a
+cashier accountable for it would mean counting money that was never in front of them.
+
+**Closing is a blind count.** The cashier enters what is in the drawer before the till
+says what should be there. Showing the expected figure first turns a count into a copying
+exercise, and a shortfall nobody can see is a shortfall nobody investigates. Once the
+count is final, the variance is shown as Short, Over or Balanced, and a variance needs a
+note.
+
+The shift report is the Z reading: sales and items, gross, discounts, senior and PWD,
+tax, net, takings by tender, the drawer reconciliation, voids, and a signature line.
+`npm run check` asserts the drawer arithmetic, including that e-wallet money stays out of
+it and that another shift's sales do not leak in.
+
+## Staff access
+
+A staff record holds what the till needs and nothing more: name, staff code, role, and
+whether they still work here. Employee numbers, addresses and government IDs belong in an
+HR system, not in a register.
+
+**Deactivate anyone who leaves.** Their code and PIN stop opening the till, enforced in
+the security rules rather than only hidden in the interface, and the device forgets their
+cached PIN so the offline path closes too. A manager who is deactivated mid-shift is
+signed out of the register they are standing at. Their past sales stay exactly where they
+are: deleting them is the opposite of what an audit trail is for.

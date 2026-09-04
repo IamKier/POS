@@ -53,6 +53,7 @@ const COLLECTIONS = [
   { slice: "categories", path: "categories", sort: byName },
   { slice: "sales", path: "sales", sort: byNewest },
   { slice: "stockMoves", path: "stockMoves", sort: byNewest },
+  { slice: "shifts", path: "shifts", sort: byOpened },
 ];
 
 const SETTINGS_PATH = ["config", "settings"];
@@ -62,6 +63,10 @@ const BATCH_LIMIT = 450;
 
 function byName(a, b) {
   return (a.name ?? "").localeCompare(b.name ?? "");
+}
+
+function byOpened(a, b) {
+  return String(b.openedAt ?? "").localeCompare(String(a.openedAt ?? ""));
 }
 
 function byNewest(a, b) {

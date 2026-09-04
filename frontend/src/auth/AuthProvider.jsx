@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AuthContext } from "./context.js";
-import { watchUser } from "./authService.js";
+import { signOutNow, watchUser } from "./authService.js";
 import { firebaseEnabled } from "../data/firebase.js";
 
 /**
@@ -35,6 +35,13 @@ export default function AuthProvider({ children }) {
   const [local, setLocal] = useState(null);
 
   useEffect(() => watchUser(setState), []);
+
+  /* A manager can deactivate someone mid-shift. The profile is watched
+     live, so the register they are standing at signs out rather than
+     waiting for them to try something. */
+  useEffect(() => {
+    if (state.profile?.active === false) signOutNow();
+  }, [state.profile?.active]);
 
   const unlockLocally = useCallback((identity) => setLocal(identity), []);
 

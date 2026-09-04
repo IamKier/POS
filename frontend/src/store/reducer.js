@@ -48,6 +48,8 @@ export function initialState() {
     carts: { tab_walkin: emptyCart() },
     sales: [],
     stockMoves: [],
+    shifts: [],
+    activeShiftId: null,
     saleCounter: 1,
     terminal: newTerminal(),
   };
@@ -166,6 +168,53 @@ export function reducer(state, action) {
       };
     }
 
+    /* ---------------------------- shifts ---------------------------- */
+    /**
+     * A shift belongs to one person at one register. It is what turns
+     * the cash in the drawer into somebody's responsibility rather than
+     * the shop's vague problem.
+     */
+    case "shift/open": {
+      const shift = {
+        id: uid("shift"),
+        terminalCode: state.terminal?.code ?? "T",
+        cashier: action.cashier ?? null,
+        openedAt: action.at,
+        openingFloat: round2(Number(action.openingFloat) || 0),
+        status: "open",
+        closedAt: null,
+      };
+      return {
+        ...state,
+        shifts: [shift, ...state.shifts],
+        activeShiftId: shift.id,
+      };
+    }
+
+    case "shift/close": {
+      const { shiftId, at, countedCash, expectedCash, note, totals } = action;
+      const counted = round2(Number(countedCash) || 0);
+      return {
+        ...state,
+        activeShiftId:
+          state.activeShiftId === shiftId ? null : state.activeShiftId,
+        shifts: state.shifts.map((s) =>
+          s.id === shiftId
+            ? {
+                ...s,
+                status: "closed",
+                closedAt: at,
+                countedCash: counted,
+                expectedCash: round2(expectedCash),
+                variance: round2(counted - expectedCash),
+                closingNote: note ?? "",
+                totals: totals ?? null,
+              }
+            : s,
+        ),
+      };
+    }
+
     /* --------------------------- checkout --------------------------- */
     case "sale/checkout": {
       const { tabId, totals, payment, at, cashier } = action;
@@ -179,6 +228,7 @@ export function reducer(state, action) {
         at,
         tabName: tab?.name ?? "Walk-in",
         cashier: cashier ?? null,
+        shiftId: state.activeShiftId ?? null,
         note: cart.note,
         customer: cart.customer ?? null,
         items: cart.items.map((l) => ({ ...l })),

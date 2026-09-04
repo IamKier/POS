@@ -27,10 +27,16 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function isManager() {
+    /* Someone who has left still knows their code and PIN, so every
+       write is checked against the account still being active. */
+    function isActive() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && profile().role == 'manager';
+        && profile().active != false;
+    }
+
+    function isManager() {
+      return isActive() && profile().role == 'manager';
     }
 
     /**
@@ -52,7 +58,7 @@ service cloud.firestore {
       allow read: if signedIn();
       allow create, delete: if isManager();
       allow update: if isManager()
-        || (signedIn()
+        || (isActive()
             && request.resource.data.diff(resource.data)
                  .affectedKeys().hasOnly(['stock']));
     }
@@ -76,16 +82,28 @@ service cloud.firestore {
      */
     match /sales/{saleId} {
       allow read: if signedIn();
-      allow create: if signedIn();
-      allow update: if signedIn();
+      allow create: if isActive();
+      allow update: if isActive();
       allow delete: if false;
     }
 
     // Stock movements are the same: written, never rewritten.
     match /stockMoves/{moveId} {
       allow read: if signedIn();
-      allow create: if signedIn();
+      allow create: if isActive();
       allow update, delete: if false;
+    }
+
+    /**
+     * A shift is opened by the cashier standing at the register and
+     * closed with a counted drawer. Like sales, it is never deleted:
+     * a shift with a shortfall is exactly the record someone will want
+     * to look at later.
+     */
+    match /shifts/{shiftId} {
+      allow read: if signedIn();
+      allow create, update: if isActive();
+      allow delete: if false;
     }
 
     match /{document=**} {

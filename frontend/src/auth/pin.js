@@ -124,6 +124,13 @@ export async function checkRememberedPin(code, pin) {
   return hash === entry.pinHash ? entry : null;
 }
 
+/** Removes one person from this device, used when they are deactivated. */
+export function forgetStaff(code) {
+  const cache = readCache();
+  delete cache[normalizeCode(code)];
+  writeCache(cache);
+}
+
 export function hasRememberedStaff() {
   return Object.keys(readCache()).some((key) => key !== "__salt");
 }

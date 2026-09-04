@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, Plus, Search, TriangleAlert, X } from "lucide-react";
+import { Camera, Plus, Search, TriangleAlert, Wallet, X } from "lucide-react";
 import { usePos } from "../store/context.js";
 import { useAuth } from "../auth/context.js";
-import { Chip, SearchInput } from "../components/ui.jsx";
+import { Button, Chip, SearchInput } from "../components/ui.jsx";
 import ProductGrid from "../components/ProductGrid.jsx";
 import CartPanel from "../components/CartPanel.jsx";
 import ModifierModal from "../components/ModifierModal.jsx";
@@ -13,6 +13,8 @@ import CustomerDiscountModal from "../components/CustomerDiscountModal.jsx";
 import ScannerModal from "../components/ScannerModal.jsx";
 import { listenForScans } from "../lib/hardwareScanner.js";
 import { cameraSupported } from "../lib/scanner.js";
+import { OpenShiftModal } from "../components/ShiftModal.jsx";
+import { activeShiftOf } from "../lib/shift.js";
 
 export default function Sell() {
   const {
@@ -27,7 +29,12 @@ export default function Sell() {
     activeCart,
     totals,
     sales,
+    shifts,
+    activeShiftId,
+    terminal,
   } = usePos();
+
+  const activeShift = activeShiftOf({ shifts, activeShiftId });
 
   const [query, setQuery] = useState("");
   const [categoryId, setCategoryId] = useState("all");
@@ -39,6 +46,7 @@ export default function Sell() {
   const [discountApproved, setDiscountApproved] = useState(false);
   const [customerDiscountOpen, setCustomerDiscountOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
+  const [openingShift, setOpeningShift] = useState(false);
   const searchRef = useRef(null);
   const { isManager, user, profile } = useAuth();
 
@@ -153,6 +161,54 @@ export default function Sell() {
   }
 
   const tablesMode = settings.serviceMode === "tables";
+
+  /**
+   * With shifts required, the register does not open until someone has
+   * counted a float into the drawer. That is the whole point: cash with
+   * nobody's name on it is cash nobody has to explain.
+   */
+  if (settings.requireShift && !activeShift) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-6">
+        <div className="w-full max-w-sm rounded-card border border-line bg-surface p-6 text-center shadow-card">
+          <span className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-accent-soft">
+            <Wallet className="size-6 text-accent" />
+          </span>
+          <h2 className="text-base font-semibold text-ink">No shift open</h2>
+          <p className="mt-1 text-sm text-muted">
+            Count the float into the drawer and open a shift on{" "}
+            {terminal?.code ?? "this register"} to start selling.
+          </p>
+          <Button
+            size="lg"
+            className="mt-5 w-full"
+            onClick={() => setOpeningShift(true)}
+          >
+            Open a shift
+          </Button>
+        </div>
+
+        {openingShift ? (
+          <OpenShiftModal
+            settings={settings}
+            cashierName={profile?.name}
+            onClose={() => setOpeningShift(false)}
+            onOpen={(openingFloat) => {
+              dispatch({
+                type: "shift/open",
+                at: new Date().toISOString(),
+                openingFloat,
+                cashier: user
+                  ? { uid: user.uid, name: profile?.name ?? user.uid }
+                  : null,
+              });
+              setOpeningShift(false);
+            }}
+          />
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <>

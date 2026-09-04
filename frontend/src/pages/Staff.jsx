@@ -14,6 +14,7 @@ import {
   createStaff,
   listStaff,
   readableAuthError,
+  setActive,
   setRole,
 } from "../auth/authService.js";
 import { useAuth } from "../auth/context.js";
@@ -63,6 +64,7 @@ export default function Staff() {
                     Added
                   </th>
                   <th className="px-4 py-3 text-right font-medium">Role</th>
+                  <th className="px-4 py-3 text-right font-medium">Access</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -76,6 +78,9 @@ export default function Staff() {
                             {person.name || "Unnamed"}
                           </span>
                           {isYou ? <Badge tone="accent">You</Badge> : null}
+                          {person.active === false ? (
+                            <Badge tone="bad">Inactive</Badge>
+                          ) : null}
                         </div>
                         <span className="font-mono text-xs text-muted sm:hidden">
                           {person.code}
@@ -103,6 +108,32 @@ export default function Staff() {
                           <option value="manager">Manager</option>
                         </Select>
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          disabled={isYou}
+                          onClick={() => {
+                            const leaving = person.active !== false;
+                            const ok = window.confirm(
+                              leaving
+                                ? `Deactivate ${person.name}? Their code and PIN stop working everywhere, including offline. Their past sales stay.`
+                                : `Let ${person.name} back in?`,
+                            );
+                            if (ok) setActive(person.uid, !leaving);
+                          }}
+                          className={`rounded-lg px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 ${
+                            person.active === false
+                              ? "text-good hover:bg-good-soft"
+                              : "text-muted hover:bg-bad-soft hover:text-bad"
+                          }`}
+                          title={
+                            isYou
+                              ? "You cannot deactivate yourself."
+                              : undefined
+                          }
+                        >
+                          {person.active === false ? "Reactivate" : "Deactivate"}
+                        </button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -118,7 +149,9 @@ export default function Staff() {
             sale or apply a discount. A manager can do everything, including
             changing prices, stock and these roles. A forgotten PIN cannot be
             reset from here, because that needs a server: add them a new code
-            instead, and they can change their own PIN once signed in.
+            instead, and they can change their own PIN once signed in. Deactivate
+            anyone who leaves: their sales stay on the record, but the code and
+            PIN stop opening the till.
           </p>
         </div>
       </div>

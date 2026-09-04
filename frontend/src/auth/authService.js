@@ -23,6 +23,7 @@ import {
 import { app, config, db, firebaseEnabled } from "../data/firebase.js";
 import {
   checkRememberedPin,
+  forgetStaff,
   normalizeCode,
   pinPassword,
   rememberStaff,
@@ -84,6 +85,15 @@ export async function signInWithPin(code, pin) {
     pinPassword(pin),
   );
   const profile = await getDoc(doc(db, "users", credential.user.uid));
+
+  /* Someone who has left keeps their code and PIN in their head, so
+     the check has to happen here rather than only in the interface. */
+  if (profile.exists() && profile.data().active === false) {
+    await signOut(auth);
+    forgetStaff(code);
+    throw new Error("That account has been deactivated. Ask a manager.");
+  }
+
   await rememberStaff({
     code,
     pin,
@@ -111,6 +121,7 @@ export async function noStaffYet() {
 function writeProfile(uid, data) {
   return setDoc(doc(db, "users", uid), {
     uid,
+    active: true,
     ...data,
     createdAt: new Date().toISOString(),
   });
@@ -206,6 +217,9 @@ export async function approveAsManager(code, pin) {
     if (!profile.exists() || profile.data().role !== "manager") {
       throw new Error("That code is not a manager.");
     }
+    if (profile.data().active === false) {
+      throw new Error("That manager account has been deactivated.");
+    }
     return { uid: credential.user.uid, name: profile.data().name };
   });
 }
@@ -236,6 +250,15 @@ export function listStaff(onChange) {
 
 export function setRole(uid, role) {
   return setDoc(doc(db, "users", uid), { role }, { merge: true });
+}
+
+/**
+ * Deactivating rather than deleting. Deleting a Firebase account needs
+ * the Admin SDK, and it would also orphan every sale that person rang
+ * up, which is the opposite of what an audit trail is for.
+ */
+export function setActive(uid, active) {
+  return setDoc(doc(db, "users", uid), { active }, { merge: true });
 }
 
 /** Firebase error codes are not sentences. These are. */

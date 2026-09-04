@@ -212,6 +212,22 @@ export default function Settings() {
             ) : null}
           </Section>
 
+          <Section
+            title="Shifts and the drawer"
+            hint="Who is accountable for the cash in front of them."
+          >
+            <Toggle
+              checked={settings.requireShift !== false}
+              onChange={(v) => save({ requireShift: v })}
+              label="A shift must be open before selling"
+            />
+            <p className="mt-1 text-xs text-muted">
+              On, the register asks for a counted float before it will sell, and
+              every sale is attributed to that shift. Off, the till sells freely
+              and the drawer is nobody's in particular.
+            </p>
+          </Section>
+
           <Section title="Inventory">
             <Field
               label="Low stock threshold"

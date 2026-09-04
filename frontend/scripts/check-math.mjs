@@ -3,6 +3,7 @@ import { computeTotals } from "../src/lib/cart.js";
 import { summarize } from "../src/lib/report.js";
 import { productOperation } from "../src/lib/syncOps.js";
 import { paymentSummary } from "../src/lib/payments.js";
+import { shiftReport, varianceLabel } from "../src/lib/shift.js";
 
 const fail = [];
 const check = (label, got, want) => {
@@ -96,7 +97,6 @@ const overshoot = computeTotals(
 );
 check("discount clamps at the subtotal", [overshoot.discount, overshoot.total], [50, 0]);
 
-
 // --- multi-device correctness -------------------------------------------
 
 // Two registers, each with its own code, must never collide on a number.
@@ -137,7 +137,6 @@ const editAndSell = productOperation(beforeProduct, { ...beforeProduct, name: 'C
 check('an edit that also moves stock still sends the whole product', editAndSell.data.name, 'Cola 330ml');
 check('and still sends stock as a delta', editAndSell.stockDelta, -1);
 
-
 // --- senior citizen and PWD discount ------------------------------------
 // The statutory discount is not 20 percent off the shelf price. The sale
 // becomes VAT exempt first, then 20 percent comes off the exempt amount.
@@ -176,7 +175,6 @@ check('exclusive pricing: 20 percent off, no tax added', [exclusiveSenior.total,
 const ordinary = computeTotals([{ unitPrice: 112, qty: 1 }], null, phSettings, null);
 check('an ordinary sale still carries VAT', [ordinary.tax, ordinary.vatExempt], [12, false]);
 check('and no statutory discount', ordinary.statutoryDiscount, 0);
-
 
 // --- split payments and the drawer --------------------------------------
 // A customer pays 200 cash and 140 GCash on a 340 sale.
@@ -241,6 +239,56 @@ const changeSale = {
 };
 const drawer2 = summarize([changeSale], {}, {});
 check("cash in the drawer is net of change given", drawer2.byMethod.cash, 340);
+
+// --- shifts and the drawer ----------------------------------------------
+// Expected cash is the float plus cash taken, less change given. Card and
+// e-wallet money never touched the drawer and must not be counted in it.
+const shift = {
+  id: "shift1",
+  terminalCode: "T1",
+  openingFloat: 1000,
+  openedAt: new Date().toISOString(),
+  status: "open",
+};
+
+const shiftSales = [
+  {
+    id: "a",
+    shiftId: "shift1",
+    status: "completed",
+    at: new Date().toISOString(),
+    subtotal: 340, discount: 0, tax: 0, total: 340, itemCount: 1, items: [],
+    payment: { method: "cash", change: 160, tenders: [{ method: "cash", amount: 500 }] },
+  },
+  {
+    id: "b",
+    shiftId: "shift1",
+    status: "completed",
+    at: new Date().toISOString(),
+    subtotal: 200, discount: 0, tax: 0, total: 200, itemCount: 1, items: [],
+    payment: { method: "gcash", change: 0, tenders: [{ method: "gcash", amount: 200 }] },
+  },
+  {
+    id: "c",
+    shiftId: "other-shift",
+    status: "completed",
+    at: new Date().toISOString(),
+    subtotal: 999, discount: 0, tax: 0, total: 999, itemCount: 1, items: [],
+    payment: { method: "cash", change: 0, tenders: [{ method: "cash", amount: 999 }] },
+  },
+];
+
+const report = shiftReport(shift, shiftSales, {}, {});
+check("only this shift's sales count", report.saleCount, 2);
+check("cash taken is net of change given", report.cashTaken, 340);
+check("expected drawer is float plus cash", report.expectedCash, 1340);
+check("e-wallet money is not in the drawer", report.nonCash, 200);
+check("net sales still include both", report.total, 540);
+
+// A short drawer is short, and an over drawer is over.
+check("a shortfall is negative", varianceLabel(1300 - report.expectedCash), "Short");
+check("an overage is positive", varianceLabel(1400 - report.expectedCash), "Over");
+check("an exact count balances", varianceLabel(0), "Balanced");
 
 console.log(fail.length ? `\n${fail.length} FAILED` : "\nall checks passed");
 process.exit(fail.length ? 1 : 0);
