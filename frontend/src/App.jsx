@@ -267,7 +267,7 @@ function SignedInAs() {
  * themselves, and every sale needs a name attached to it.
  */
 function Gate() {
-  const { ready, user, requiresAuth } = useAuth();
+  const { ready, user, requiresAuth, unlockLocally } = useAuth();
 
   if (!ready) {
     return (
@@ -277,7 +277,7 @@ function Gate() {
     );
   }
 
-  if (requiresAuth && !user) return <Login />;
+  if (requiresAuth && !user) return <Login onOfflineUnlock={unlockLocally} />;
 
   return (
     <PosProvider>

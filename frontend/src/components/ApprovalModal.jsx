@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { Button, Field, Input, Modal } from "./ui.jsx";
+import PinPad from "./PinPad.jsx";
 import { approveAsManager, readableAuthError } from "../auth/authService.js";
 
 /**
@@ -10,20 +11,21 @@ import { approveAsManager, readableAuthError } from "../auth/authService.js";
  * action rather than just waved through.
  */
 export default function ApprovalModal({ action, onApproved, onClose }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   async function submit(event) {
-    event.preventDefault();
+    event?.preventDefault?.();
     setBusy(true);
     setError("");
     try {
-      const manager = await approveAsManager(email, password);
+      const manager = await approveAsManager(code, pin);
       onApproved(manager);
     } catch (err) {
       setError(readableAuthError(err));
+      setPin("");
       setBusy(false);
     }
   }
@@ -45,26 +47,30 @@ export default function ApprovalModal({ action, onApproved, onClose }) {
           </p>
         </div>
 
-        <Field label="Manager email">
+        <Field label="Manager code">
           <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
+            className="font-mono lowercase"
             required
             autoFocus
             autoComplete="off"
           />
         </Field>
 
-        <Field label="Password">
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="off"
-          />
-        </Field>
+        <div>
+          <span className="mb-1.5 block text-xs font-medium tracking-wide text-muted uppercase">
+            Manager PIN
+          </span>
+          <PinPad value={pin} onChange={setPin} onSubmit={submit} />
+        </div>
+
+        {busy ? (
+          <p className="text-center text-sm text-muted">Checking</p>
+        ) : null}
 
         {error ? (
           <p className="rounded-card bg-bad-soft px-3 py-2 text-sm text-bad">
@@ -75,9 +81,6 @@ export default function ApprovalModal({ action, onApproved, onClose }) {
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>
             Cancel
-          </Button>
-          <Button type="submit" disabled={busy}>
-            {busy ? "Checking" : "Approve"}
           </Button>
         </div>
       </form>

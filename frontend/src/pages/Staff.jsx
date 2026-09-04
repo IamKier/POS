@@ -18,6 +18,7 @@ import {
 } from "../auth/authService.js";
 import { useAuth } from "../auth/context.js";
 import { formatDate } from "../lib/format.js";
+import { codeProblem, pinProblem } from "../auth/pin.js";
 
 export default function Staff() {
   const { user } = useAuth();
@@ -56,7 +57,7 @@ export default function Staff() {
                 <tr>
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="hidden px-4 py-3 font-medium sm:table-cell">
-                    Email
+                    Code
                   </th>
                   <th className="hidden px-4 py-3 font-medium md:table-cell">
                     Added
@@ -76,12 +77,12 @@ export default function Staff() {
                           </span>
                           {isYou ? <Badge tone="accent">You</Badge> : null}
                         </div>
-                        <span className="text-xs text-muted sm:hidden">
-                          {person.email}
+                        <span className="font-mono text-xs text-muted sm:hidden">
+                          {person.code}
                         </span>
                       </td>
-                      <td className="hidden px-4 py-3 text-muted sm:table-cell">
-                        {person.email}
+                      <td className="hidden px-4 py-3 font-mono text-muted sm:table-cell">
+                        {person.code}
                       </td>
                       <td className="hidden px-4 py-3 text-muted md:table-cell">
                         {person.createdAt ? formatDate(person.createdAt) : "-"}
@@ -115,7 +116,9 @@ export default function Staff() {
           <p>
             A cashier can sell, and needs a manager standing there to void a
             sale or apply a discount. A manager can do everything, including
-            changing prices, stock and these roles.
+            changing prices, stock and these roles. A forgotten PIN cannot be
+            reset from here, because that needs a server: add them a new code
+            instead, and they can change their own PIN once signed in.
           </p>
         </div>
       </div>
@@ -130,8 +133,8 @@ export default function Staff() {
 function AddStaffModal({ onClose }) {
   const [form, setForm] = useState({
     name: "",
-    email: "",
-    password: "",
+    code: "",
+    pin: "",
     role: "cashier",
   });
   const [busy, setBusy] = useState(false);
@@ -142,6 +145,12 @@ function AddStaffModal({ onClose }) {
     event.preventDefault();
     setBusy(true);
     setError("");
+    const problem = codeProblem(form.code) ?? pinProblem(form.pin, form.role);
+    if (problem) {
+      setError(problem);
+      setBusy(false);
+      return;
+    }
     try {
       await createStaff(form);
       onClose();
@@ -156,7 +165,7 @@ function AddStaffModal({ onClose }) {
       open
       onClose={onClose}
       title="Add staff"
-      subtitle="They sign in with this email and password."
+      subtitle="They sign in at the till with this code and PIN."
       width="max-w-sm"
     >
       <form onSubmit={submit} className="space-y-4">
@@ -168,22 +177,37 @@ function AddStaffModal({ onClose }) {
             autoFocus
           />
         </Field>
-        <Field label="Email">
+        <Field label="Staff code" hint="What they type at the till. Short and memorable.">
           <Input
-            type="email"
-            value={form.email}
-            onChange={(e) => set({ email: e.target.value })}
+            value={form.code}
+            onChange={(e) => set({ code: e.target.value })}
+            placeholder="maria"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
+            className="font-mono lowercase"
             required
             autoComplete="off"
           />
         </Field>
-        <Field label="Password" hint="At least six characters. They can keep it.">
+        <Field
+          label="PIN"
+          hint={
+            form.role === "manager"
+              ? "Six digits. A manager PIN approves voids."
+              : "Four to six digits. They can change it once signed in."
+          }
+        >
           <Input
-            type="password"
-            value={form.password}
-            onChange={(e) => set({ password: e.target.value })}
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={form.pin}
+            onChange={(e) =>
+              set({ pin: e.target.value.replace(/[^0-9]/g, "").slice(0, 6) })
+            }
+            className="tnum font-mono tracking-widest"
             required
-            autoComplete="new-password"
+            autoComplete="off"
           />
         </Field>
         <Field label="Role">
