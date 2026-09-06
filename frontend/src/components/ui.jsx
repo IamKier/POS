@@ -39,7 +39,7 @@ export function IconButton({ className = "", label, ...props }) {
     <button
       aria-label={label}
       title={label}
-      className={`inline-flex size-8 items-center justify-center rounded text-muted transition-colors hover:bg-surface-2 hover:text-ink ${className}`}
+      className={`inline-flex size-8 items-center justify-center rounded-sm text-muted transition-colors hover:bg-surface-2 hover:text-ink ${className}`}
       {...props}
     />
   );
@@ -129,7 +129,7 @@ export function Toggle({ checked, onChange, label }) {
 export function Chip({ active, className = "", ...props }) {
   return (
     <button
-      className={`flex shrink-0 items-center gap-2 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+      className={`flex shrink-0 items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${
         active
           ? "bg-accent-solid text-white shadow-card"
           : "bg-surface-2 text-muted hover:bg-surface-3 hover:text-ink"
@@ -149,7 +149,7 @@ export function Badge({ tone = "neutral", children, className = "" }) {
   };
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${tones[tone]} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium ${tones[tone]} ${className}`}
     >
       {children}
     </span>
@@ -203,7 +203,7 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 backdrop-blur-[2px] sm:items-center sm:p-6">
       <div
-        className={`flex max-h-full w-full ${width} flex-col overflow-hidden rounded-t-md border border-line bg-surface shadow-pop sm:rounded-card`}
+        className={`flex max-h-full w-full ${width} flex-col overflow-hidden rounded-t-sm border border-line bg-surface shadow-pop sm:rounded-card`}
       >
         <header className="flex items-start justify-between gap-4 border-b border-line px-5 py-4">
           <div className="min-w-0">

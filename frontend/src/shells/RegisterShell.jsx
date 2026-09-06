@@ -32,12 +32,12 @@ export default function RegisterShell({ onOpenAdmin }) {
           <span className="truncate text-[15px] font-semibold text-ink">
             {settings.storeName}
           </span>
-          <span className="rounded bg-accent-soft px-2 py-0.5 text-[11px] font-medium tracking-wide text-accent uppercase">
+          <span className="rounded-sm bg-surface-2 px-2 py-0.5 text-[11px] font-medium tracking-wide text-muted uppercase">
             Register
           </span>
         </span>
 
-        <span className="hidden rounded bg-surface-2 px-2.5 py-1 font-mono text-xs text-muted sm:inline">
+        <span className="hidden rounded-sm bg-surface-2 px-2.5 py-1 font-mono text-xs text-muted sm:inline">
           {terminal?.code ?? "T"}
         </span>
 
@@ -62,7 +62,7 @@ export default function RegisterShell({ onOpenAdmin }) {
           {isManager ? (
             <button
               onClick={onOpenAdmin}
-              className="flex h-10 items-center gap-2 rounded-md border border-line px-3 text-sm font-medium text-ink transition-colors active:bg-surface-2"
+              className="flex h-10 items-center gap-2 rounded-sm border border-line px-3 text-sm font-medium text-ink transition-colors active:bg-surface-2"
             >
               <LayoutDashboard className="size-4" />
               <span className="hidden sm:inline">Admin</span>
@@ -73,7 +73,7 @@ export default function RegisterShell({ onOpenAdmin }) {
             <button
               onClick={() => signOutNow()}
               title="Sign out"
-              className="flex size-10 items-center justify-center rounded-md border border-line text-muted transition-colors active:bg-surface-2"
+              className="flex size-10 items-center justify-center rounded-sm border border-line text-muted transition-colors active:bg-surface-2"
             >
               <LogOut className="size-4" />
             </button>

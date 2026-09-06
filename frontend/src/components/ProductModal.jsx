@@ -286,7 +286,7 @@ export default function ProductModal({ product, categories, onClose, onSave }) {
                         ),
                       })
                     }
-                    className="rounded p-1.5 text-muted hover:text-bad"
+                    className="rounded-sm p-1.5 text-muted hover:text-bad"
                     aria-label="Remove group"
                   >
                     <Trash2 className="size-4" />
@@ -325,7 +325,7 @@ export default function ProductModal({ product, categories, onClose, onSave }) {
                             ),
                           })
                         }
-                        className="rounded p-1.5 text-muted hover:text-bad"
+                        className="rounded-sm p-1.5 text-muted hover:text-bad"
                         aria-label="Remove option"
                       >
                         <Trash2 className="size-4" />

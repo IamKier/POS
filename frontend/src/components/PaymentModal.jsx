@@ -151,7 +151,7 @@ export default function PaymentModal({ totals, settings, onClose, onConfirm }) {
                     <span className="tnum font-medium">{money(t.amount)}</span>
                     <button
                       onClick={() => setTenders(tenders.filter((_, j) => j !== i))}
-                      className="rounded p-1 text-muted hover:text-bad"
+                      className="rounded-sm p-1 text-muted hover:text-bad"
                       aria-label="Remove this payment"
                     >
                       <Trash2 className="size-4" />

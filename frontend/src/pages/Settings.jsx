@@ -154,7 +154,7 @@ export default function Settings() {
                             }
                             dispatch({ type: "tab/remove", tabId: tab.id });
                           }}
-                          className="rounded p-2 text-muted hover:text-bad"
+                          className="rounded-sm p-2 text-muted hover:text-bad"
                           aria-label={`Remove ${tab.name}`}
                         >
                           <Trash2 className="size-4" />

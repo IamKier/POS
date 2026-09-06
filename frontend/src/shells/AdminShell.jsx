@@ -48,14 +48,14 @@ export default function AdminShell({ onOpenRegister }) {
     <div className="flex h-screen overflow-hidden bg-surface-2">
       <nav className="no-print flex w-16 shrink-0 flex-col border-r border-line bg-surface lg:w-60">
         <div className="flex h-16 items-center gap-3 px-3 lg:px-4">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent-solid text-white">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-sm bg-accent-solid text-white">
             <Store className="size-5" />
           </span>
           <span className="hidden min-w-0 lg:block">
             <span className="block truncate text-sm font-semibold text-ink">
               {settings.storeName}
             </span>
-            <span className="block text-xs font-medium tracking-wide text-accent uppercase">
+            <span className="block text-xs font-medium tracking-wide text-muted uppercase">
               Back office
             </span>
           </span>
@@ -71,7 +71,7 @@ export default function AdminShell({ onOpenRegister }) {
                   <button
                     onClick={() => setPage(item.id)}
                     title={item.label}
-                    className={`flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors ${
+                    className={`flex w-full items-center gap-3 rounded-sm px-3 py-3 text-sm font-medium transition-colors ${
                       active
                         ? "bg-accent-soft text-accent"
                         : "text-muted hover:bg-surface-2 hover:text-ink"
@@ -89,7 +89,7 @@ export default function AdminShell({ onOpenRegister }) {
         <div className="border-t border-line p-2 lg:p-3">
           <button
             onClick={onOpenRegister}
-            className="mb-1 flex w-full items-center gap-3 rounded-md bg-accent-solid px-3 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+            className="mb-1 flex w-full items-center gap-3 rounded-sm bg-accent-solid px-3 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
           >
             <ShoppingCart className="size-5 shrink-0" />
             <span className="hidden lg:block">Open the register</span>
@@ -100,7 +100,7 @@ export default function AdminShell({ onOpenRegister }) {
           {requiresAuth ? (
             <button
               onClick={() => signOutNow()}
-              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+              className="flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink"
             >
               <LogOut className="size-5 shrink-0" />
               <span className="hidden truncate lg:block">
@@ -138,17 +138,16 @@ function ConnectionBadge() {
   if (status === "off") return null;
 
   const state = !online
-    ? { dot: "bg-warn", label: "Offline, sales queued" }
+    ? { tone: "text-warn", label: "Offline, sales queued" }
     : status === "error"
-      ? { dot: "bg-bad", label: "Cloud unreachable" }
+      ? { tone: "text-bad", label: "Cloud unreachable" }
       : status === "synced"
-        ? { dot: "bg-good", label: "Cloud sync on" }
-        : { dot: "bg-line-strong", label: "Connecting" };
+        ? { tone: "text-muted", label: "Cloud sync on" }
+        : { tone: "text-muted", label: "Connecting" };
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2 text-xs text-muted">
-      <span className={`size-2 shrink-0 rounded-full ${state.dot}`} />
-      <span className="hidden lg:block">{state.label}</span>
-    </div>
+    <p className={`hidden px-3 py-2 text-xs lg:block ${state.tone}`}>
+      {state.label}
+    </p>
   );
 }

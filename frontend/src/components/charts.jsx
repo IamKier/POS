@@ -9,7 +9,7 @@ import { useState } from "react";
  * Rules the marks follow, and the reasons:
  *   - one hue for magnitude, because a bar chart of one measure is not
  *     four categories and should not look like it
- *   - 4px rounded ends anchored to the baseline, so a bar reads as a
+ *   - 4px rounded-sm ends anchored to the baseline, so a bar reads as a
  *     bar and not a floating capsule
  *   - a 2px gap between neighbours, so adjacent bars stay countable
  *   - recessive grid, no axis furniture that repeats the labels
@@ -37,7 +37,7 @@ export function BarChart({ data, format, height = 168, emptyLabel = "Nothing yet
   return (
     <div className="relative">
       {point ? (
-        <div className="pointer-events-none absolute -top-1 left-1/2 z-10 -translate-x-1/2 rounded bg-ink px-2.5 py-1.5 text-xs text-white shadow-raised">
+        <div className="pointer-events-none absolute -top-1 left-1/2 z-10 -translate-x-1/2 rounded-sm bg-ink px-2.5 py-1.5 text-xs text-white shadow-raised">
           <span className="tnum font-semibold">{format(point.value)}</span>
           <span className="ml-2 opacity-70">{point.key}</span>
         </div>
@@ -57,11 +57,11 @@ export function BarChart({ data, format, height = 168, emptyLabel = "Nothing yet
               onFocus={() => setHover(i)}
               onBlur={() => setHover(null)}
               title={`${d.key}: ${format(d.value)}`}
-              className="group relative flex h-full flex-1 flex-col justify-end rounded-t"
+              className="group relative flex h-full flex-1 flex-col justify-end rounded-t-sm"
             >
               {/* A full-height hit area, so a 3px bar is still hoverable. */}
               <span
-                className="w-full rounded-t transition-opacity"
+                className="w-full rounded-t-sm transition-opacity"
                 style={{
                   height: `${Math.max(ratio * 100, d.value > 0 ? 2 : 0)}%`,
                   background: BAR_HUE,
@@ -133,7 +133,7 @@ export function StatTile({ label, value, hint, tone = "neutral" }) {
     accent: "text-accent",
   };
   return (
-    <div className="rounded-md border border-line bg-surface px-5 py-4">
+    <div className="rounded-sm border border-line bg-surface px-5 py-4">
       <p className="text-xs font-medium tracking-wide text-muted uppercase">
         {label}
       </p>
@@ -148,7 +148,7 @@ export function StatTile({ label, value, hint, tone = "neutral" }) {
 export function Panel({ title, hint, children, className = "" }) {
   return (
     <section
-      className={`rounded-md border border-line bg-surface p-5 ${className}`}
+      className={`rounded-sm border border-line bg-surface p-5 ${className}`}
     >
       <div className="mb-4">
         <h2 className="text-sm font-semibold text-ink">{title}</h2>

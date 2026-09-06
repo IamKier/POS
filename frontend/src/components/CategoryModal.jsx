@@ -3,16 +3,6 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button, Input, Modal } from "./ui.jsx";
 import { uid } from "../lib/format.js";
 
-const SWATCHES = [
-  "#0ea5e9",
-  "#f97316",
-  "#10b981",
-  "#8b5cf6",
-  "#ef4444",
-  "#eab308",
-  "#ec4899",
-  "#64748b",
-];
 
 export default function CategoryModal({
   categories,
@@ -37,13 +27,6 @@ export default function CategoryModal({
             key={category.id}
             className="flex items-center gap-2 rounded-card border border-line px-3 py-2"
           >
-            <input
-              type="color"
-              value={category.color}
-              onChange={(e) => onSave({ ...category, color: e.target.value })}
-              className="size-7 shrink-0 cursor-pointer rounded border border-line-strong bg-surface"
-              aria-label={`Color for ${category.name}`}
-            />
             <Input
               value={category.name}
               onChange={(e) => onSave({ ...category, name: e.target.value })}
@@ -54,7 +37,7 @@ export default function CategoryModal({
             </span>
             <button
               onClick={() => onRemove(category.id)}
-              className="rounded p-1.5 text-muted hover:text-bad"
+              className="rounded-sm p-1.5 text-muted hover:text-bad"
               aria-label={`Delete ${category.name}`}
             >
               <Trash2 className="size-4" />
@@ -68,11 +51,7 @@ export default function CategoryModal({
         onSubmit={(e) => {
           e.preventDefault();
           if (!newName.trim()) return;
-          onSave({
-            id: uid("cat"),
-            name: newName.trim(),
-            color: SWATCHES[categories.length % SWATCHES.length],
-          });
+          onSave({ id: uid("cat"), name: newName.trim() });
           setNewName("");
         }}
       >

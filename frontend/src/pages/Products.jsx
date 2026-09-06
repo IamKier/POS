@@ -140,13 +140,10 @@ export default function Products() {
                               src={product.image}
                               alt=""
                               loading="lazy"
-                              className="size-10 shrink-0 rounded object-cover"
+                              className="size-10 shrink-0 rounded-sm object-cover"
                             />
                           ) : (
-                            <span
-                              className="flex size-10 shrink-0 items-center justify-center rounded text-xs font-semibold text-white"
-                              style={{ background: category?.color ?? "#8a857c" }}
-                            >
+                            <span className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-surface-2 text-xs font-semibold text-muted">
                               {product.name.slice(0, 2).toUpperCase()}
                             </span>
                           )}
@@ -200,7 +197,7 @@ export default function Products() {
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => setEditing(product)}
-                            className="flex items-center gap-1.5 rounded px-2 py-1.5 text-muted transition-colors hover:bg-accent-soft hover:text-accent"
+                            className="flex items-center gap-1.5 rounded-sm px-2 py-1.5 text-muted transition-colors hover:bg-accent-soft hover:text-accent"
                             aria-label={`Edit ${product.name}`}
                           >
                             <Pencil className="size-4" />
@@ -210,7 +207,7 @@ export default function Products() {
                           </button>
                           <button
                             onClick={() => remove(product)}
-                            className="flex items-center gap-1.5 rounded px-2 py-1.5 text-muted transition-colors hover:bg-bad-soft hover:text-bad"
+                            className="flex items-center gap-1.5 rounded-sm px-2 py-1.5 text-muted transition-colors hover:bg-bad-soft hover:text-bad"
                             aria-label={`Delete ${product.name}`}
                           >
                             <Trash2 className="size-4" />
