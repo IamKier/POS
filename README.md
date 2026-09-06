@@ -345,3 +345,18 @@ and every bar is direct-labelled, so identity never rests on colour alone.
 
 Profit is estimated against each product's cost as it stands today, so a supplier price
 change re-values older sales. Good enough to steer by, not to file.
+
+## Demo data
+
+`node scripts/seed-demo.mjs` fills the project with a coffee shop: a menu of 26 items
+with sizes, milks and add-ons, twelve employees who can actually sign in, and a fortnight
+of trading.
+
+Demo data that is too tidy teaches you nothing, so the generated history has a morning
+rush and an afternoon lull, cashiers tied to the shifts they worked, drawers that came up
+a few pesos short, senior and PWD sales, split payments, and the occasional void. Those
+are the cases the reports have to survive.
+
+`--wipe` clears the catalog and history first, `--no-staff` skips creating sign-in
+accounts, and `--dry` prints what it would write without touching anything. The generator
+is seeded, so a re-run produces the same shop.
