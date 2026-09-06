@@ -47,6 +47,7 @@ export default function Sell() {
   const [customerDiscountOpen, setCustomerDiscountOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [openingShift, setOpeningShift] = useState(false);
+  const [justAdded, setJustAdded] = useState(null);
   const searchRef = useRef(null);
   const { isManager, user, profile } = useAuth();
 
@@ -58,6 +59,12 @@ export default function Sell() {
     const t = setTimeout(() => setWarning(""), 2600);
     return () => clearTimeout(t);
   }, [warning]);
+
+  useEffect(() => {
+    if (!justAdded) return undefined;
+    const t = setTimeout(() => setJustAdded(null), 700);
+    return () => clearTimeout(t);
+  }, [justAdded]);
 
   /* The handler closes over the catalog, so it changes every render.
      Keeping it in a ref means the global key listener is attached once
@@ -107,6 +114,7 @@ export default function Sell() {
       return;
     }
     dispatch({ type: "cart/add", tabId: activeTabId, product, modifiers, qty });
+    setJustAdded(product.id);
   }
 
   function pick(product) {
@@ -215,9 +223,6 @@ export default function Sell() {
       <div className="flex min-h-0 flex-1">
         <section className="flex min-w-0 flex-1 flex-col">
           <header className="no-print flex h-16 items-center gap-3 border-b border-line bg-surface px-4">
-            <h1 className="hidden shrink-0 text-base font-semibold text-ink md:block">
-              Sell
-            </h1>
             <div className="relative flex min-w-0 flex-1 items-center">
               <SearchInput
                 ref={searchRef}
@@ -246,7 +251,7 @@ export default function Sell() {
               <button
                 onClick={() => setScanning(true)}
                 title="Scan with the camera"
-                className="flex h-10 shrink-0 items-center gap-2 rounded-card border border-line-strong bg-surface px-3 text-sm font-medium text-ink transition-colors hover:bg-surface-2"
+                className="flex h-12 shrink-0 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium text-ink transition-colors active:bg-surface-2"
               >
                 <Camera className="size-4" />
                 <span className="hidden sm:inline">Scan</span>
@@ -332,6 +337,7 @@ export default function Sell() {
               currency={settings.currency}
               lowStockThreshold={settings.lowStockThreshold}
               onPick={pick}
+              justAddedId={justAdded}
             />
           </div>
         </section>

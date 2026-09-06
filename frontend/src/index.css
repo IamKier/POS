@@ -13,12 +13,12 @@
                            label text keeps its contrast
    --------------------------------------------------------------- */
 @theme {
-  --color-canvas: #f5f6f8;
+  --color-canvas: #f7f8fa;
   --color-surface: #ffffff;
-  --color-surface-2: #f1f3f7;
-  --color-surface-3: #e9ecf2;
-  --color-line: #e6e8ee;
-  --color-line-strong: #d3d8e2;
+  --color-surface-2: #f4f5f8;
+  --color-surface-3: #eceef3;
+  --color-line: #eceef2;
+  --color-line-strong: #dde0e7;
 
   --color-ink: #101828;
   --color-muted: #667085;
@@ -38,44 +38,20 @@
   --radius-card: 0.75rem;
   --radius-pill: 999px;
 
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.06);
-  --shadow-raised: 0 4px 12px -2px rgb(16 24 40 / 0.1);
-  --shadow-pop: 0 16px 40px -12px rgb(16 24 40 / 0.28);
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04);
+  --shadow-raised: 0 4px 14px -4px rgb(16 24 40 / 0.08);
+  --shadow-pop: 0 20px 48px -16px rgb(16 24 40 / 0.24);
 }
 
-/* Dark theme. "system" is the default: no attribute on the root, so
-   the media query decides. An explicit choice stamps data-theme and
-   wins in both directions. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-canvas: #0b0f17;
-    --color-surface: #141a24;
-    --color-surface-2: #1b2330;
-    --color-surface-3: #232c3b;
-    --color-line: #222b39;
-    --color-line-strong: #333e50;
-
-    --color-ink: #e7ecf3;
-    --color-muted: #94a3b8;
-
-    --color-accent: #a5b4fc;
-    --color-accent-solid: #4f46e5;
-    --color-accent-hover: #6366f1;
-    --color-accent-soft: #1e2445;
-
-    --color-good: #34d399;
-    --color-good-soft: #06251c;
-    --color-warn: #fbbf24;
-    --color-warn-soft: #2a2010;
-    --color-bad: #f87171;
-    --color-bad-soft: #2c1618;
-
-    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
-    --shadow-raised: 0 4px 12px -2px rgb(0 0 0 / 0.5);
-    --shadow-pop: 0 16px 40px -12px rgb(0 0 0 / 0.7);
-  }
-}
-
+/**
+ * The till is white. A shop floor is bright, a dark screen washes out
+ * under it, and a register that changes colour when the sun goes down
+ * is not what anyone wants behind a counter.
+ *
+ * Dark is therefore an explicit choice rather than something the
+ * operating system decides, and it exists for the admin screens someone
+ * might be reading late. Nothing follows prefers-color-scheme.
+ */
 :root[data-theme="dark"] {
   --color-canvas: #0b0f17;
   --color-surface: #141a24;

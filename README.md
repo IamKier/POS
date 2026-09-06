@@ -295,3 +295,46 @@ the security rules rather than only hidden in the interface, and the device forg
 cached PIN so the offline path closes too. A manager who is deactivated mid-shift is
 signed out of the register they are standing at. Their past sales stay exactly where they
 are: deleting them is the opposite of what an audit trail is for.
+
+## Two panels
+
+The register and the admin panel are separate shells, not two tabs of one screen.
+
+**The register** is a single screen with no navigation on it: a top bar naming the store,
+the terminal, the open shift and who is on, and below that the grid and the order. A
+cashier with a queue should not be one mis-tap from the price list. A manager gets an
+Admin button; a cashier does not, and the Firestore rules reject their writes even if
+they somehow reached it.
+
+**The admin panel** holds the dashboard, catalog, inventory, sales, shifts, staff and
+settings, with its own sidebar and a button back to the register.
+
+Everything on the register is sized for a finger: 48px step controls, 40px-tall product
+tiles with no hover-only information, a 64px charge button. The quantity in the cart is a
+button rather than a label, because twelve of something should be two taps on a keypad
+instead of twelve taps on a plus sign. A scan lights up the tile it landed on, since a
+scan otherwise gives no feedback at all and the cashier scans again.
+
+The till is white. A shop floor is bright, a dark screen washes out under it, and a
+register that changes colour when the sun goes down is not what anyone wants behind a
+counter. Dark is an explicit choice in Settings, for the admin screens someone might be
+reading late, and nothing follows the operating system any more.
+
+## Analytics
+
+The dashboard answers questions that have a decision behind them: when am I busy, what
+actually sells, what do I make on it.
+
+Net sales, gross profit and margin, average sale, items sold. Sales by day across the
+range, takings by hour (where a second person on the counter would pay for itself), top
+products by takings, sales by category, and how people paid, with split payments counted
+as their parts.
+
+Charts are inline SVG and plain HTML, no charting library: the app already carries a
+125 KB scanner it may never use, and another 100 KB to draw fifteen rectangles would be a
+poor trade. One hue for magnitude, because a chart of one measure is not four categories
+and should not look like it. Category colours are validated for colour-blind separation,
+and every bar is direct-labelled, so identity never rests on colour alone.
+
+Profit is estimated against each product's cost as it stands today, so a supplier price
+change re-values older sales. Good enough to steer by, not to file.

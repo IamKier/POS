@@ -17,7 +17,7 @@ export const defaultSettings = {
   statutoryDiscount: true, // senior citizen and PWD, 20 percent and VAT exempt
   statutoryRate: 0.2,
   serviceMode: "retail", // "retail" for one running cart, "tables" for open bills
-  theme: "system", // "system", "light" or "dark"
+  theme: "light", // the till is white by default; "dark" is opt-in
   receiptFooter: "Thank you and please come again.",
 };
 
