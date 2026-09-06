@@ -45,7 +45,7 @@ export default function AdminShell({ onOpenRegister }) {
   const Page = current.Page;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-canvas">
+    <div className="flex h-screen overflow-hidden bg-surface-2">
       <nav className="no-print flex w-16 shrink-0 flex-col border-r border-line bg-surface lg:w-60">
         <div className="flex h-16 items-center gap-3 px-3 lg:px-4">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent-solid text-white">
@@ -55,7 +55,9 @@ export default function AdminShell({ onOpenRegister }) {
             <span className="block truncate text-sm font-semibold text-ink">
               {settings.storeName}
             </span>
-            <span className="block text-xs text-muted">Admin</span>
+            <span className="block text-xs font-medium tracking-wide text-accent uppercase">
+              Back office
+            </span>
           </span>
         </div>
 

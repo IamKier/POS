@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { BarChart3 } from "lucide-react";
 import { usePos } from "../store/context.js";
 import { Chip, PageHeader } from "../components/ui.jsx";
 import { BarChart, Panel, RankedBars, StatTile } from "../components/charts.jsx";
@@ -49,6 +50,9 @@ export default function Dashboard() {
     };
   }, [sales, range, days, openedAt, productById, categoryById]);
 
+  /* An empty dashboard reads as a broken one, so say which it is. */
+  const noSalesEver = !sales.some((s) => s.status === "completed");
+
   const count = view.sales.length;
   const items = view.sales.reduce((n, s) => n + s.itemCount, 0);
   const average = count ? view.profit.revenue / count : 0;
@@ -65,7 +69,25 @@ export default function Dashboard() {
       </PageHeader>
 
       <div className="scroll-slim min-h-0 flex-1 overflow-auto p-4">
-        <div className="mx-auto max-w-6xl space-y-4">
+        {noSalesEver ? (
+          <div className="mx-auto max-w-md py-16 text-center">
+            <span className="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-accent-soft">
+              <BarChart3 className="size-7 text-accent" />
+            </span>
+            <h2 className="text-base font-semibold text-ink">
+              Nothing has been sold yet
+            </h2>
+            <p className="mt-1.5 text-sm text-muted">
+              Every chart here is built from real sales, so it fills in the
+              moment the register takes its first one. Open the register, ring
+              something up, and come back.
+            </p>
+          </div>
+        ) : null}
+
+        <div
+          className={`mx-auto max-w-6xl space-y-4 ${noSalesEver ? "hidden" : ""}`}
+        >
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <StatTile
               label="Net sales"

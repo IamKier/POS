@@ -26,10 +26,15 @@ export default function RegisterShell({ onOpenAdmin }) {
   const taken = shiftSales.reduce((sum, s) => sum + s.total, 0);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-canvas">
+    <div className="flex h-screen flex-col overflow-hidden bg-surface">
       <header className="no-print flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
-        <span className="truncate text-[15px] font-semibold text-ink">
-          {settings.storeName}
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-[15px] font-semibold text-ink">
+            {settings.storeName}
+          </span>
+          <span className="rounded-pill bg-accent-soft px-2 py-0.5 text-[11px] font-medium tracking-wide text-accent uppercase">
+            Register
+          </span>
         </span>
 
         <span className="hidden rounded-pill bg-surface-2 px-2.5 py-1 font-mono text-xs text-muted sm:inline">
