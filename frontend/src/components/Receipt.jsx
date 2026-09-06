@@ -30,6 +30,23 @@ export default function Receipt({ sale, settings }) {
       </div>
       <div>{formatDateTime(sale.at)}</div>
       {sale.cashier?.name ? <div>Cashier: {sale.cashier.name}</div> : null}
+      {sale.type === "return" ? (
+        <>
+          <p className="mt-1 text-center text-sm font-bold">*** RETURN ***</p>
+          <p className="text-center text-[10px]">
+            Against {sale.originalNumber}
+          </p>
+          {sale.reason ? (
+            <p className="text-center text-[10px]">{sale.reason}</p>
+          ) : null}
+          {sale.approvedBy?.name ? (
+            <p className="text-center text-[10px]">
+              Approved by {sale.approvedBy.name}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+
       {sale.status === "voided" ? (
         <>
           <p className="mt-1 text-center text-sm font-bold">*** VOIDED ***</p>

@@ -110,11 +110,12 @@ export function tenderMix(sales) {
 }
 
 /**
- * What the shop actually made, not what it took. Cost comes from the
- * product record as it stands today, so this is an estimate rather than
- * a historical cost of goods: if a price of a supplier changed last
- * month, older sales are valued at the new cost. Good enough to steer
- * by, not good enough to file.
+ * What the shop actually made, not what it took.
+ *
+ * Cost comes from the sale line, captured when it was rung up, so a
+ * supplier price change today does not re-value last month. Sales taken
+ * before line costs existed fall back to the product record and carry
+ * that older caveat.
  */
 export function margin(sales, productById) {
   let revenue = 0;
@@ -122,7 +123,8 @@ export function margin(sales, productById) {
   for (const sale of sales) {
     revenue += sale.total;
     for (const line of sale.items) {
-      cost += (productById[line.productId]?.cost ?? 0) * line.qty;
+      const unitCost = line.unitCost ?? productById[line.productId]?.cost ?? 0;
+      cost += unitCost * line.qty;
     }
   }
   const profit = round2(revenue - cost);

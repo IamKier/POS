@@ -1,21 +1,37 @@
-import { Ban, Printer } from "lucide-react";
+import { Ban, Printer, Undo2 } from "lucide-react";
 import { Button, Modal } from "./ui.jsx";
 import Receipt from "./Receipt.jsx";
 
-export default function ReceiptModal({ sale, settings, onClose, onVoid }) {
+export default function ReceiptModal({ sale, settings, onClose, onVoid, onReturn }) {
   return (
     <Modal
       open
       onClose={onClose}
-      title={`Receipt ${sale.number}`}
-      subtitle={sale.status === "voided" ? "This sale was voided" : "Sale completed"}
+      title={`${sale.type === "return" ? "Return" : "Receipt"} ${sale.number}`}
+      subtitle={
+        sale.type === "return"
+          ? `Refund against ${sale.originalNumber}`
+          : sale.status === "voided"
+            ? "This sale was voided"
+            : "Sale completed"
+      }
       width="max-w-md"
       footer={
         <>
-          {onVoid && sale.status !== "voided" ? (
-            <Button variant="ghost" className="mr-auto text-bad" onClick={onVoid}>
+          {onReturn ? (
+            <Button variant="outline" className="mr-auto" onClick={onReturn}>
+              <Undo2 className="size-4" />
+              Return items
+            </Button>
+          ) : null}
+          {onVoid && sale.status !== "voided" && sale.type !== "return" ? (
+            <Button
+              variant="ghost"
+              className={onReturn ? "text-bad" : "mr-auto text-bad"}
+              onClick={onVoid}
+            >
               <Ban className="size-4" />
-              Void sale
+              Void
             </Button>
           ) : null}
           <Button variant="outline" onClick={() => window.print()}>

@@ -7,6 +7,7 @@ import { round2 } from "./format.js";
 export function summarize(sales, productById, categoryById) {
   const completed = sales.filter((s) => s.status === "completed");
   const voided = sales.filter((s) => s.status === "voided");
+  const returns = completed.filter((s) => s.type === "return");
 
   const byMethod = {};
   const byCategory = {};
@@ -76,7 +77,10 @@ export function summarize(sales, productById, categoryById) {
   }
 
   return {
-    transactions: completed.length,
+    /* A refund is not a sale, so it does not inflate the count. */
+    transactions: completed.length - returns.length,
+    returns: returns.length,
+    refunded: round2(returns.reduce((sum, s) => sum + Math.abs(s.total), 0)),
     voided: voided.length,
     voidedValue: round2(voided.reduce((sum, s) => sum + s.total, 0)),
     gross: round2(gross),
@@ -87,7 +91,10 @@ export function summarize(sales, productById, categoryById) {
     tax: round2(tax),
     total: round2(total),
     items,
-    average: completed.length ? round2(total / completed.length) : 0,
+    average:
+      completed.length - returns.length > 0
+        ? round2(total / (completed.length - returns.length))
+        : 0,
     byMethod,
     byCategory: Object.entries(byCategory).sort((a, b) => b[1] - a[1]),
     topItems: Object.values(byItem)

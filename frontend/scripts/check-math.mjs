@@ -4,6 +4,7 @@ import { summarize } from "../src/lib/report.js";
 import { productOperation } from "../src/lib/syncOps.js";
 import { paymentSummary } from "../src/lib/payments.js";
 import { shiftReport, varianceLabel } from "../src/lib/shift.js";
+import { buildReturn, returnableLines } from "../src/lib/returns.js";
 
 const fail = [];
 const check = (label, got, want) => {
@@ -289,6 +290,89 @@ check("net sales still include both", report.total, 540);
 check("a shortfall is negative", varianceLabel(1300 - report.expectedCash), "Short");
 check("an overage is positive", varianceLabel(1400 - report.expectedCash), "Over");
 check("an exact count balances", varianceLabel(0), "Balanced");
+
+
+
+// --- returns -------------------------------------------------------------
+// A return is its own transaction. The original sale must be untouched,
+// the money must come back at what was actually paid, and stock must
+// return to the shelf.
+const soldAt = new Date().toISOString();
+const original = {
+  id: "sale_x",
+  number: "T1-00007",
+  type: "sale",
+  at: soldAt,
+  status: "completed",
+  subtotal: 400,
+  discount: 40,
+  tax: 38.57,
+  total: 360,
+  itemCount: 4,
+  taxable: 321.43,
+  taxExempt: 0,
+  items: [
+    { id: "l1", productId: "prd_cola", name: "Cola", unitPrice: 100, unitCost: 30, qty: 2, modifiers: [] },
+    { id: "l2", productId: "prd_latte", name: "Latte", unitPrice: 100, unitCost: 40, qty: 2, modifiers: [] },
+  ],
+  payment: { method: "cash", tenders: [{ method: "cash", amount: 500 }], change: 140 },
+};
+
+const refund = buildReturn({
+  sale: original,
+  selections: { l1: 1 },
+  number: "T1-00008",
+  at: new Date().toISOString(),
+  cashier: { uid: "u1", name: "Andrea" },
+  refundMethod: "cash",
+  reason: "Damaged",
+});
+
+check("a return points at the sale it came from", refund.originalSaleId, "sale_x");
+check("the returned quantity is negative", refund.items[0].qty, -1);
+check("the line remembers which line it reverses", refund.items[0].originalLineId, "l1");
+check("subtotal comes back negative", refund.subtotal, -100);
+// One cookie is a quarter of the 400 subtotal, so a quarter of the 360 paid.
+check("the refund is what was paid, not the shelf price", refund.total, -90);
+check("tax comes back proportionally", refund.tax, -9.64);
+check("the item count drops", refund.itemCount, -1);
+check("the refund tender is negative", refund.payment.tenders[0].amount, -90);
+
+// A second return cannot take back more than remains.
+const remaining = returnableLines(original, [original, refund]);
+check("one of that line is left", remaining.find((r) => r.line.id === "l1").remaining, 1);
+check("the untouched line is fully returnable", remaining.find((r) => r.line.id === "l2").remaining, 2);
+check("the returned tally is tracked", remaining.find((r) => r.line.id === "l1").returned, 1);
+
+// Reports: the return nets the day down without deleting the sale.
+const dayWithReturn = summarize([original, refund], {}, {});
+check("takings net down by the refund", dayWithReturn.total, 270);
+check("a refund is not counted as a sale", dayWithReturn.transactions, 1);
+check("but it is counted as a return", [dayWithReturn.returns, dayWithReturn.refunded], [1, 90]);
+check("the drawer loses the cash refunded", dayWithReturn.byMethod.cash, 270);
+
+// Stock goes back on the shelf.
+let rs = initialState();
+rs = reducer(rs, { type: "sale/return", sale: refund, at: refund.at, counter: 9 });
+check("the return is recorded", rs.sales[0].number, "T1-00008");
+check("a stock movement puts it back", rs.stockMoves[0].delta, 1);
+check("and says why", rs.stockMoves[0].reason, "return");
+
+// Receipt numbers heal after a device is wiped.
+let wiped = initialState();
+wiped = reducer(wiped, { type: "terminal/setCode", code: "T1" });
+wiped = { ...wiped, saleCounter: 1, sales: [{ number: "T1-00042", status: "completed", items: [], payment: {} }] };
+const colaAgain = wiped.products.find((p) => p.id === "prd_cola") ?? wiped.products[0];
+wiped = reducer(wiped, { type: "cart/add", tabId: "tab_walkin", product: colaAgain, qty: 1 });
+const wipedTotals = computeTotals(wiped.carts.tab_walkin.items, null, wiped.settings);
+wiped = reducer(wiped, {
+  type: "sale/checkout",
+  tabId: "tab_walkin",
+  totals: wipedTotals,
+  at: new Date().toISOString(),
+  payment: { method: "cash", tenders: [{ method: "cash", amount: 100 }], change: 0 },
+});
+check("a reset counter does not reissue an existing number", wiped.sales[0].number, "T1-00043");
 
 console.log(fail.length ? `\n${fail.length} FAILED` : "\nall checks passed");
 process.exit(fail.length ? 1 : 0);

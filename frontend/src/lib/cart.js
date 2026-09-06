@@ -20,6 +20,10 @@ export function buildLine(product, modifiers = [], qty = 1) {
     productId: product.id,
     name: product.name,
     basePrice: Number(product.price) || 0,
+    /* Captured at the moment of sale. Reading it back off the product
+       later would re-value old sales every time a supplier changed
+       their price, quietly rewriting last month's profit. */
+    unitCost: Number(product.cost) || 0,
     unitPrice: round2((Number(product.price) || 0) + addOn),
     qty,
     modifiers: modifiers.map((m) => ({

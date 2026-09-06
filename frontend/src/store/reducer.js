@@ -63,8 +63,34 @@ function withCart(state, tabId, cart) {
   return { ...state, carts: { ...state.carts, [tabId]: cart } };
 }
 
-function saleNumber(terminal, n) {
-  return `${terminal?.code ?? "T"}-${String(n).padStart(5, "0")}`;
+function format(code, n) {
+  return `${code}-${String(n).padStart(5, "0")}`;
+}
+
+/**
+ * The next receipt number for this register.
+ *
+ * The local counter alone was not safe: clearing site data on a tablet
+ * reset it to 1 and the register silently began reissuing numbers that
+ * already existed, which is the kind of thing nobody notices until two
+ * identical receipts turn up in a reconciliation. So the counter is
+ * checked against the highest number already recorded for this
+ * terminal, and the higher of the two wins. Sales sync back from
+ * Firestore, so a wiped device heals itself as soon as it reconnects.
+ */
+function nextSaleNumber(state) {
+  const code = state.terminal?.code ?? "T";
+  const prefix = `${code}-`;
+  let highest = 0;
+
+  for (const sale of state.sales) {
+    if (!sale.number?.startsWith(prefix)) continue;
+    const value = Number(sale.number.slice(prefix.length));
+    if (Number.isFinite(value) && value > highest) highest = value;
+  }
+
+  const next = Math.max(state.saleCounter ?? 1, highest + 1);
+  return { number: format(code, next), counter: next + 1 };
 }
 
 function applyStock(products, productId, delta) {
@@ -222,9 +248,11 @@ export function reducer(state, action) {
       if (!cart.items.length) return state;
 
       const tab = state.tabs.find((t) => t.id === tabId);
+      const numbering = nextSaleNumber(state);
       const sale = {
         id: uid("sale"),
-        number: saleNumber(state.terminal, state.saleCounter),
+        number: numbering.number,
+        type: "sale",
         at,
         tabName: tab?.name ?? "Walk-in",
         cashier: cashier ?? null,
@@ -258,7 +286,43 @@ export function reducer(state, action) {
         ...withCart({ ...state, products }, tabId, emptyCart()),
         sales: [sale, ...state.sales],
         stockMoves: [...moves, ...state.stockMoves],
-        saleCounter: state.saleCounter + 1,
+        saleCounter: numbering.counter,
+      };
+    }
+
+    /**
+     * Money going back out. The original sale is left exactly as it
+     * was: a void says the sale never happened, a return says some of
+     * it came back, and only one of those is true here.
+     */
+    case "sale/return": {
+      const { sale, at } = action;
+      if (!sale) return state;
+
+      let products = state.products;
+      const moves = [];
+      for (const line of sale.items) {
+        const product = state.products.find((p) => p.id === line.productId);
+        if (!product?.trackStock) continue;
+        /* Line quantities on a return are negative, so this puts stock
+           back rather than taking more of it away. */
+        products = applyStock(products, line.productId, -line.qty);
+        moves.push({
+          id: uid("mv"),
+          at,
+          productId: line.productId,
+          delta: -line.qty,
+          reason: "return",
+          note: sale.number,
+        });
+      }
+
+      return {
+        ...state,
+        products,
+        sales: [sale, ...state.sales],
+        stockMoves: [...moves, ...state.stockMoves],
+        saleCounter: action.counter ?? state.saleCounter,
       };
     }
 

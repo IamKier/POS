@@ -1,203 +1,131 @@
-# Tindahan POS
+# Kapé Kalye POS
 
-A general purpose point of sale: retail checkout and table or tab service in the same app,
-built to keep selling when the internet does not. React 19, Vite, Tailwind 4, Firebase, and
-an installable PWA.
+Point of sale for a single-branch shop: retail checkout and table service in one app, built
+to keep selling when the internet does not.
+
+**Private and proprietary.** This repository is not open source and carries no licence
+granting use, copying, modification or distribution. It lives on GitHub for deployment and
+convenience, not for reuse. If this is not yours, you do not have permission to run it.
+
+Live: https://pos-woad-six.vercel.app
+
+---
 
 ## Running it
 
 ```
 cd frontend
 npm install
-npm run build     # production bundle in frontend/dist
+npm run build      # production bundle in frontend/dist
 npm run lint
-npm run check     # asserts the totals, stock and reporting math
+npm run check      # 83 assertions over the money, stock and reporting logic
+npm run icons      # regenerate the PWA icons
 ```
+
+`npm run dev` exists but is not the workflow here: changes are committed, pushed, and
+reviewed on the Vercel deploy.
 
 `npm run check` runs [frontend/scripts/check-math.mjs](frontend/scripts/check-math.mjs)
-against the reducer and the math helpers with no browser involved: line merging, VAT in and
-out of the price, discount clamping, stock deducted on a sale and returned on a void, and the
-report rollups.
+against the reducer and the pure helpers, with no browser and no network. It has caught
+real defects during development, including double-counted change in the drawer report and a
+whole block of assertions accidentally written after `process.exit`. If you touch money,
+stock, shifts or returns, add to it.
 
-## What is in v1
+### Deployment
 
-**Sell.** Category chips, search that doubles as a barcode field (a scanner types the code
-and presses Enter, which drops the item straight into the cart), product grid, cart with
-quantity controls, order level discount by percent or amount, order note. Products with
-option groups open a chooser first, so a large latte with an extra shot prices itself.
-In tables mode several carts stay open at once under table or tab names.
+Vercel, Root Directory `frontend`, framework auto-detected as Vite. A push to `main`
+deploys. The six `VITE_FIREBASE_*` variables must be set in the Vercel project, or the
+deployed app silently runs local-only.
 
-**Payment.** Cash, card or e-wallet. Cash gets quick tender buttons (exact, then the next
-note up) and live change due. Card and e-wallet take a reference number.
+---
 
-**Receipts.** An 80mm thermal layout that prints from the browser. The print stylesheet
-hides everything except the receipt, so Ctrl+P produces the roll and nothing else.
+## The two panels
 
-**Products.** Full CRUD with categories, price, cost, margin, SKU, barcode, an availability
-switch, and an editor for option groups (required groups behave like a size picker, optional
-groups like add-ons).
+The register and the back office are separate shells, not two tabs of one screen.
 
-**Inventory.** Stock on hand per product, low stock and out of stock flags against a
-configurable threshold, stock value at cost and at retail, manual adjustments (receive,
-remove, set a counted quantity) with a reason and note, and a movement log. Sales deduct
-stock automatically and voids put it back.
+**The register** ([shells/RegisterShell.jsx](frontend/src/shells/RegisterShell.jsx)) is a
+single screen with no navigation on it: a thin bar naming the store, terminal, open shift
+and cashier, and below it the product grid and the order. A cashier with a queue should not
+be one mis-tap from the price list. It sits on white.
 
-**Sales.** Today, last 7 days or all time. Net sales, transaction count, items sold, average
-sale, a payment method split and top items. Any receipt reopens for reprint or void. The
-Summary button prints a cash-up sheet: gross, discounts, tax, net, payments by method, sales
-by category, top items, and voided totals.
+**The back office** ([shells/AdminShell.jsx](frontend/src/shells/AdminShell.jsx)) holds the
+dashboard, catalog, inventory, sales, shifts, staff and settings, with a sidebar and a
+button back to the register. It sits on the tinted canvas so the two are never confused.
 
-**Settings.** Store details and receipt footer, currency, tax label and rate, tax inclusive
-or exclusive pricing, service mode, tab names, low stock threshold, and a reset back to the
-demo catalog.
+A manager sees an Admin button. A cashier does not, and the Firestore rules reject their
+writes even if they reached it.
 
-## Firebase
+### Interface rules
 
-Firestore is wired in and optional. With no config the app runs entirely on
-localStorage; with config it also syncs to the cloud, so a second device sees the same
-catalog, stock and sales.
+Everything on the register is sized for a finger: 48px step controls, product cards with
+nothing revealed by hover, a 64px charge button. The quantity in the cart is a button that
+opens a keypad, because twelve of something should not be twelve taps. A scan lights up the
+card it landed on, since a scan gives no feedback of its own and a cashier who cannot tell
+it worked scans again.
 
-Copy `frontend/.env.example` to `frontend/.env.local` and fill in the six values from
-Firebase console → Project settings → Your apps. They are publishable values that ship
-in every Firebase web bundle: the access boundary is security rules, not secrecy.
+One theme, white, no switch. A shop floor is bright, a dark screen washes out under it, and
+a register that changes appearance depending on the device or the hour is a support call
+waiting to happen. Neutrals are warm, paper and stone rather than slate. A single navy
+accent marks things that take an action; red and amber are reserved for state that costs
+money to ignore.
 
-For the Vercel deploy, add the same six variables under Settings → Environment Variables,
-then redeploy. Without them the deployed site still works, just local-only.
+---
 
-## Offline
+## What it does
 
-The app is an installable PWA. Add it to a home screen and it opens and sells with the
-router unplugged. Two halves make that work, and both are needed: the service worker
-precaches the app shell, so the page loads with no connection, and Firestore's persistent
-cache holds the data. Without the service worker, "works offline" would only have meant
-"works offline as long as you never close the tab".
+### Selling
 
-Icons are generated by `npm run icons`
-([scripts/make-icons.mjs](frontend/scripts/make-icons.mjs)), which draws the PNGs with zlib
-rather than pulling in an image toolchain to make a rounded square.
+Category chips, search that doubles as a barcode field, product cards with photographs,
+option groups (sizes, milks, add-ons) that price themselves, order-level discounts, order
+notes. In tables mode several orders stay open at once under table names.
 
-**Offline is the point.** [firebase.js](frontend/src/data/firebase.js) turns on
-`persistentLocalCache`, so reads come from IndexedDB and writes are accepted and queued
-while the connection is down, then flushed on reconnect. A till that stops selling when
-the Wi-Fi drops is not deployable, and this is the piece that prevents it. The sidebar
-shows the live state: cloud sync on, offline with sales queued, or cloud unreachable.
+### Scanning
 
-[cloudSync.js](frontend/src/data/cloudSync.js) holds both directions. `pushToCloud`
-diffs two states and writes only what changed. `startCloudSync` subscribes to each
-collection and merges what other devices wrote. The local reducer stays the source of
-truth for the screens, which is what keeps the register instant: a sale renders first
-and the write goes out behind it.
+Two paths, because a counter and a phone are different problems.
 
-Open carts and tabs are deliberately not synced. A cart belongs to the terminal holding
-it, and two registers should not fight over one customer's basket.
+**Professional scanners.** A USB or Bluetooth barcode scanner is an HID keyboard: it types
+the code and presses Enter. [hardwareScanner.js](frontend/src/lib/hardwareScanner.js)
+listens globally rather than relying on the search box having focus, and tells a scan from
+a person typing by speed, since a scanner emits characters roughly twenty times faster than
+a fast typist. It stands down while a modal is open, so a scan cannot drop an item into a
+cart mid-payment.
 
-## Signing in
+**Phone camera.** Chrome on Android has a native `BarcodeDetector`; Safari and Firefox
+lazy-load ZXing on first use, as a plain JavaScript chunk the service worker precaches. A
+WebAssembly decoder would be smaller but fetches its `.wasm` at runtime, which is the wrong
+trade for a till that has to scan offline. Used for adding to the cart, capturing barcodes
+in the product editor, and reading the QR off a customer's payment confirmation.
 
-Staff sign in at the till with a **staff code and a PIN** on a number pad. There is no
-email anywhere in the interface. Firebase has no PIN provider, so underneath, each staff
-member is an email-and-password account whose address nobody ever sees: the code becomes a
-reserved-domain address (`.invalid`, reserved by RFC 2606 for exactly this) and the PIN
-becomes the password, padded to meet Firebase's six character minimum. Real Firebase
-sessions, so the security rules work unchanged.
+### Payments
 
-A 4-digit PIN is four digits of entropy whatever it is wrapped in. Firebase rate limits
-sign-in attempts and the register sits behind a counter; manager PINs are held to six
-digits because they approve voids.
+Cash, card, GCash, Maya, QR Ph and bank transfer, and split payment across any combination.
+Only cash can overpay, because only cash gives change. For the QR methods the store's own
+code (uploaded in Settings) is shown full size for the customer to scan.
 
-**Signing in offline.** Firebase cannot authenticate without a network, so each register
-remembers the staff who have signed in on it before: code, name, role, and a per-device
-salted hash of the PIN, in localStorage. That is enough to open the till and attribute
-sales with the line down. The hash never goes to Firestore, because a shared hash of a
-4-digit PIN is a 4-digit secret anyone signed in could crack in seconds. New staff, or a
-register nobody has used yet, still need one online sign-in first.
+**There is no payment gateway.** Nothing confirms a payment automatically. That needs a
+merchant account, a registered business and a server to receive the webhook. The cashier
+confirms the customer's screen and records the reference, which is how a shop without a
+gateway has always taken e-wallets.
 
-A forgotten PIN cannot be reset by a manager, because that needs the Admin SDK and a
-server. Add the person a new code; they can change their own PIN once signed in.
+The drawer report sees the parts, not the lump: a 200 cash plus 140 GCash sale files 200
+under cash and 140 under GCash, net of change, because counting 340 of anything makes the
+drawer impossible to reconcile.
 
-## Staff, roles and locking it down
+### Returns
 
-With no Firebase config the app runs open, so a local clone is never locked out of its own
-demo.
+A return is its own transaction pointing back at the original sale, never an edit of it. A
+void says the sale never happened, which rewrites yesterday's takings and unbalances a
+shift that already closed. Returns are stored with negative quantities and negative money,
+which is what makes every existing rollup correct without knowing returns exist.
 
-The first account created is the owner and becomes a **manager**. Everyone after that is
-created by a manager from Admin → Staff, on a second Firebase app instance so creating an
-account does not sign the manager out of their own register mid-shift.
+Refunds are proportional to what came back, so a discounted or VAT-exempt sale refunds what
+the customer actually paid rather than the shelf price. Partial returns are tracked, so two
+of them cannot together refund more than was sold. Stock goes back on the shelf. A manager
+approves, because money is leaving.
 
-| | Cashier | Manager |
-|---|---|---|
-| Sell, take payment, print | yes | yes |
-| See the Admin section | no | yes |
-| Edit catalog, prices, settings, roles | no | yes |
-| Void a sale, apply a discount | with manager approval at the till | yes |
+### Senior citizen and PWD discount
 
-Approval is a manager entering their own credentials on the register. It runs on a
-separate auth session, so the cashier stays signed in, and the approving manager is
-recorded on the void. Every sale carries the cashier who rang it up, and the receipt
-prints it.
-
-Roles live in `users/{uid}.role`, not in a custom auth claim, because claims can only be
-set by the Admin SDK, which needs a server and the paid plan. Security rules read that
-document, and only a manager can write to `users`, so a cashier cannot promote themselves.
-
-**Applying the rules, in this order.** [firestore.rules](firestore.rules) is written but
-not applied, and the project is still in test mode, which allows anyone with the config to
-read and write, and expires 30 days after 3 September 2026.
-
-1. Firebase console → Authentication → Sign-in method → enable **Email/Password**
-2. Open the app and **create the owner account**, while test mode still allows the write
-3. Firestore Database → Rules → paste the file → Publish
-
-The rules make sales and stock movements append-only, and let a cashier change exactly one
-field on a product, the stock count, because that is what a sale does. Their price is not
-theirs to touch.
-
-## Where the data lives
-
-There is no server. State sits in one reducer ([frontend/src/store/reducer.js](frontend/src/store/reducer.js))
-and is mirrored to localStorage by [frontend/src/store/PosProvider.jsx](frontend/src/store/PosProvider.jsx),
-so a refresh does not lose an open cart or the day's sales. Clearing site data clears the
-till, and nothing syncs between devices.
-
-Swapping in Supabase or IndexedDB later means rewriting the provider, not the screens: every
-page reads through `usePos()` and writes by dispatching an action, and no component touches
-storage directly.
-
-## Layout
-
-```
-frontend/src
-  data/seed.js          starter catalog and default settings
-  store/reducer.js      every state transition, pure
-  store/PosProvider.jsx state, persistence, derived values
-  store/context.js      the usePos hook
-  lib/cart.js           line building and the totals math
-  lib/report.js         sales rollups
-  lib/format.js         money, dates, ids
-  components/           grid, cart, modals, receipt, shared UI
-  pages/                Sell, Products, Inventory, Sales, Settings
-```
-
-## Tax math
-
-`taxInclusive` on (the Philippine default) means the shelf price already contains the tax, so
-the receipt backs it out: `tax = net - net / (1 + rate)`. Off means the tax is added on top of
-the discounted subtotal. Both paths live in `computeTotals` in
-[frontend/src/lib/cart.js](frontend/src/lib/cart.js).
-
-Receipts are marked "not an official receipt". BIR accreditation, serial numbers and a
-tamper evident audit trail are not part of this build.
-
-## Not built yet
-
-Users and shift login, cash drawer float and cash counts, returns against a receipt (voids
-only for now), suppliers and purchase orders, customer accounts, multi-store, and hardware
-integration beyond browser printing.
-
-## Senior citizen and PWD discount
-
-Philippine law grants a 20 percent discount to senior citizens and persons with
-disability, and makes the sale VAT exempt. Those are two separate things happening at
-once, and the order matters:
+The statutory Philippine discount is not 20 percent off the shelf price:
 
 ```
 Gross (VAT inclusive)          112.00
@@ -206,157 +134,180 @@ Less 20% of 100             =   20.00
 Amount due                  =   80.00
 ```
 
-Taking 20 percent off 112 and charging 89.60 overcharges the customer, and leaving the VAT
-in misdeclares it. `npm run check` asserts both, along with the rule that a promotional
-discount does not stack on top.
+Charging 89.60 overcharges the customer; leaving the VAT in misdeclares it. The till
+captures the name and OSCA or PWD number, prints them with a signature line, and reports
+the discount and VAT-exempt sales separately.
 
-The discount is granted against a named ID holder, so the till captures the name and the
-OSCA or PWD ID number, and the receipt prints them with a signature line to match the
-booklet the customer signs. The day summary reports the discount total, the number of such
-sales, and VAT-exempt sales separately, because the exemption is declared separately.
+### Shifts and the drawer
 
-Turn it off in Settings for a shop outside the Philippines.
+A shift belongs to one person at one register, and the till will not sell until a float is
+counted in. Expected cash is the float plus cash taken less change given: card and e-wallet
+money never touched the drawer.
 
-## Scanning
+**Closing is a blind count.** The cashier enters what is in the drawer before the till says
+what should be there, because showing the expected figure first turns a count into a copying
+exercise. The variance then reads Short, Over or Balanced and asks what happened.
 
-Two paths, because a shop counter and a phone are different problems.
+### Inventory
 
-**Professional scanners.** A USB or Bluetooth barcode scanner is an HID keyboard: it types
-the code and presses Enter. Nothing to install. The catch is that a keyboard types into
-whatever has focus, so [hardwareScanner.js](frontend/src/lib/hardwareScanner.js) listens
-globally instead and works without clicking the search box first. It tells a scan from a
-person typing by speed: a scanner emits characters a few milliseconds apart, a fast typist
-manages about 80. It stands down while a modal is open, so a scan cannot drop an item into
-a cart mid-payment. It also fills the barcode field in the product editor, which is how a
-catalog gets built quickly.
+Stock on hand, low and out flags, stock value at cost and retail, manual adjustments with a
+reason, and a movement log. Sales deduct; voids and returns put back.
 
-**Phone camera.** Chrome on Android has `BarcodeDetector` built in, which is instant and
-free. Safari and Firefox do not, so those lazy-load ZXing the first time a camera opens,
-as a plain JavaScript chunk the service worker precaches. A WebAssembly decoder would have
-been smaller but fetches its `.wasm` at runtime, which is the wrong trade for a till that
-has to scan offline. Camera scanning needs HTTPS, which Vercel provides.
+Drinks are deliberately not stock-tracked: nobody counts lattes. See Known gaps for what
+that leaves missing.
 
-The camera is used in three places: scanning items into the cart, capturing a barcode in
-the product editor, and reading the QR off a customer's payment confirmation so a disputed
-GCash payment has something to check against.
+### Analytics
 
-Every receipt also prints a QR of its number, total and time, so a return or a reprint is
-a scan rather than a search through a list.
+Sales by day, takings by hour, top products, category split, payment mix, and gross profit
+against the cost captured on each sale line. Charts are inline SVG rather than a library,
+one hue for magnitude, category colours validated for colour-blind separation, every bar
+direct-labelled so identity never rests on colour.
 
-## Payments
+### Export
 
-Cash, card, GCash, Maya, QR Ph and bank transfer, and **split payment** across any
-combination of them: 200 in cash and the rest on GCash is one sale with two tenders.
+Sales export to CSV from the Sales screen, one row per receipt or one row per line, with a
+BOM so Excel on a Windows machine renders peso signs and Filipino names correctly.
 
-For the QR methods, your own code (uploaded in Settings, downscaled on upload because
-settings sync to a Firestore document with a 1MB ceiling) is shown full size for the
-customer to scan. The cashier confirms their screen and records the reference.
+---
 
-Only cash can overpay, and the excess is change. Nobody hands back change for an overpaid
-card tap, and `npm run check` asserts that, along with the rule that matters for a cash
-count: **the drawer report sees the parts, not the lump.** A 200 cash plus 140 GCash sale
-files 200 under cash and 140 under GCash, net of any change given, because counting 340 of
-anything makes the drawer impossible to reconcile at close.
+## Access and security
 
-**There is no payment gateway.** Nothing here talks to GCash, Maya or a bank, so no
-payment is confirmed automatically. That needs a merchant account, a registered business,
-and a server to receive the webhook that says the money arrived. Everything up to that line
-is built; the line itself is not crossed.
+Staff sign in at the till with a **staff code and a PIN** on a number pad. Firebase has no
+PIN provider, so underneath each person is an email-and-password account whose address
+nobody ever sees: the code becomes a reserved-domain address (`.invalid`, reserved by RFC
+2606 for exactly this) and the PIN becomes the password. Real Firebase sessions, so the
+rules work unchanged.
 
-## Shifts and the drawer
+A 4-digit PIN is four digits of entropy however it is wrapped. What protects it is
+Firebase's rate limiting and the register sitting behind a counter. Manager PINs are six
+digits because they approve voids and refunds.
 
-A shift belongs to one person at one register. With "a shift must be open before selling"
-on (Settings, default), the till will not sell until someone has counted a float into the
-drawer, and every sale from then carries that shift.
+| | Cashier | Manager |
+|---|---|---|
+| Sell, take payment, print | yes | yes |
+| See the back office | no | yes |
+| Edit catalog, prices, settings, roles | no | yes |
+| Void, discount, refund | manager approval at the till | yes |
 
-**Expected cash is the float plus cash taken, less change given.** Card and e-wallet
-takings are deliberately excluded: that money never touched the drawer, so holding a
-cashier accountable for it would mean counting money that was never in front of them.
+Approval runs on a second auth session so the cashier is never signed out, verifies the
+role rather than just the PIN, and records who approved it.
 
-**Closing is a blind count.** The cashier enters what is in the drawer before the till
-says what should be there. Showing the expected figure first turns a count into a copying
-exercise, and a shortfall nobody can see is a shortfall nobody investigates. Once the
-count is final, the variance is shown as Short, Over or Balanced, and a variance needs a
-note.
+**Deactivate anyone who leaves.** Their code and PIN stop working, enforced in the rules
+rather than only hidden in the interface, and the device forgets their cached PIN so the
+offline path closes too. Their sales stay: deleting them is the opposite of what an audit
+trail is for.
 
-The shift report is the Z reading: sales and items, gross, discounts, senior and PWD,
-tax, net, takings by tender, the drawer reconciliation, voids, and a signature line.
-`npm run check` asserts the drawer arithmetic, including that e-wallet money stays out of
-it and that another shift's sales do not leak in.
+### Applying the rules
 
-## Staff access
+[firestore.rules](firestore.rules) is written but must be published by hand, in this order:
 
-A staff record holds what the till needs and nothing more: name, staff code, role, and
-whether they still work here. Employee numbers, addresses and government IDs belong in an
-HR system, not in a register.
+1. Firebase console, Authentication, Sign-in method, enable **Email/Password**
+2. Create the owner account in the app, while test mode still allows the write
+3. Firestore Database, Rules, paste the file, Publish
 
-**Deactivate anyone who leaves.** Their code and PIN stop opening the till, enforced in
-the security rules rather than only hidden in the interface, and the device forgets their
-cached PIN so the offline path closes too. A manager who is deactivated mid-shift is
-signed out of the register they are standing at. Their past sales stay exactly where they
-are: deleting them is the opposite of what an audit trail is for.
+Publishing first locks you out of creating the account the rules require.
 
-## Two panels
+The rules make sales, returns, stock movements and shifts append-only, and let a cashier
+change exactly one field on a product, the stock count, because that is what a sale does.
 
-The register and the admin panel are separate shells, not two tabs of one screen.
+---
 
-**The register** is a single screen with no navigation on it: a top bar naming the store,
-the terminal, the open shift and who is on, and below that the grid and the order. A
-cashier with a queue should not be one mis-tap from the price list. A manager gets an
-Admin button; a cashier does not, and the Firestore rules reject their writes even if
-they somehow reached it.
+## Offline
 
-**The admin panel** holds the dashboard, catalog, inventory, sales, shifts, staff and
-settings, with its own sidebar and a button back to the register.
+The app is an installable PWA. Two halves make offline work and both are needed: the
+service worker precaches the app shell so the page loads with no connection, and Firestore's
+`persistentLocalCache` holds the data and queues writes until the line returns. Without the
+service worker, "works offline" would only mean "works offline as long as you never close
+the tab".
 
-Everything on the register is sized for a finger: 48px step controls, 40px-tall product
-tiles with no hover-only information, a 64px charge button. The quantity in the cart is a
-button rather than a label, because twelve of something should be two taps on a keypad
-instead of twelve taps on a plus sign. A scan lights up the tile it landed on, since a
-scan otherwise gives no feedback at all and the cashier scans again.
+Sign-in works offline too, for staff who have used that register before: the device keeps
+their code, name, role and a per-device salted hash of their PIN in localStorage. The hash
+never goes to Firestore, because a shared hash of a 4-digit PIN is a 4-digit secret anyone
+signed in could crack in seconds.
 
-One theme, white, no switch. A shop floor is bright, a dark screen washes out under it,
-and a register that changes appearance depending on the device or the hour is a support
-call waiting to happen. The neutrals are warm rather than blue-grey, paper and stone
-rather than slate, with a single navy accent used only on things that take an action.
+---
 
-Products are cards with photographs. A photo is the fastest way to find an item on a busy
-screen, so it takes the top two thirds of the card; without one the card falls back to
-initials on the category colour, which still gives the eye something to aim at instead of
-a wall of identical white boxes. Images are downscaled to about 320px on upload and stored
-on the record, so a photo is available offline with the product it belongs to. Past a few
-hundred photographed items, Firebase Storage is the next step.
+## How it is built
 
-## Analytics
+```
+frontend/src
+  shells/          RegisterShell (the till), AdminShell (the back office)
+  pages/           Sell, Dashboard, Products, Inventory, Sales, Shifts, Staff, Settings
+  components/      grid, cart, modals, receipt, charts, shared UI
+  store/           reducer (every state transition, pure), provider, context
+  auth/            PIN sign-in over Firebase Auth, offline cache, roles
+  data/            firebase init, cloud sync, local storage adapter, seed
+  lib/             cart and tax math, returns, payments, shifts, reports,
+                   analytics, scanners, CSV, images
+  scripts/         check-math.mjs, seed-demo.mjs, make-icons.mjs
+```
 
-The dashboard answers questions that have a decision behind them: when am I busy, what
-actually sells, what do I make on it.
+State lives in one reducer. Screens never touch storage: they read through `usePos()` and
+write by dispatching. Persistence sits underneath, localStorage always and Firestore when
+configured, which is what has kept the storage decision reversible.
 
-Net sales, gross profit and margin, average sale, items sold. Sales by day across the
-range, takings by hour (where a second person on the counter would pay for itself), top
-products by takings, sales by category, and how people paid, with split payments counted
-as their parts.
+Firestore sync is layered over the reducer rather than replacing it. A sale lands in local
+state and renders immediately; the write goes out behind it. `pushToCloud` diffs two states
+and writes only what changed; `startCloudSync` subscribes per collection and merges what
+other devices wrote.
 
-Charts are inline SVG and plain HTML, no charting library: the app already carries a
-125 KB scanner it may never use, and another 100 KB to draw fifteen rectangles would be a
-poor trade. One hue for magnitude, because a chart of one measure is not four categories
-and should not look like it. Category colours are validated for colour-blind separation,
-and every bar is direct-labelled, so identity never rests on colour alone.
+### Decisions worth knowing before changing things
 
-Profit is estimated against each product's cost as it stands today, so a supplier price
-change re-values older sales. Good enough to steer by, not to file.
+**Receipt numbers are per terminal**, `T1-00001`, not from a shared counter. A shared
+counter needs a server transaction per sale, so the register could not issue a receipt with
+the internet down. The counter also checks itself against the highest number already
+recorded for that terminal, so clearing site data on a tablet cannot silently reissue
+numbers that already exist.
+
+**Stock syncs as a delta, not a count.** Two tills holding 4, each selling one, each
+computing 3 and writing it, would leave the shop having sold two units while the count fell
+by one. `increment()` sends the change instead of the answer.
+
+**A stock change writes only the stock field**, which is what lets the rules allow a cashier
+to deduct stock without touching a price, and stops a register with a stale copy reverting
+an edit a manager just made.
+
+**Cost is captured on the sale line** at checkout, so a supplier price change today does not
+re-value last month's profit.
+
+**Open carts and tabs are never synced.** A cart belongs to the terminal holding it, and two
+registers should not fight over one basket.
+
+---
 
 ## Demo data
 
-`node scripts/seed-demo.mjs` fills the project with a coffee shop: a menu of 26 items
-with sizes, milks and add-ons, twelve employees who can actually sign in, and a fortnight
-of trading.
+`node scripts/seed-demo.mjs` fills the project with a coffee shop: 26 items, twelve
+employees who can sign in, and a fortnight of trading. `--wipe` clears first, `--dry` prints
+what it would write, `--no-staff` skips the accounts. The generator is seeded, so a re-run
+produces the same shop.
 
-Demo data that is too tidy teaches you nothing, so the generated history has a morning
-rush and an afternoon lull, cashiers tied to the shifts they worked, drawers that came up
-a few pesos short, senior and PWD sales, split payments, and the occasional void. Those
-are the cases the reports have to survive.
+The history is deliberately untidy: a morning rush and an afternoon lull, cashiers tied to
+the shifts they worked, drawers a few pesos short, senior discounts, split payments and the
+occasional void. Those are the cases the reports have to survive.
 
-`--wipe` clears the catalog and history first, `--no-staff` skips creating sign-in
-accounts, and `--dry` prints what it would write without touching anything. The generator
-is seeded, so a re-run produces the same shop.
+**The demo PINs are in that script, in this repository.** Fine for demo accounts, and they
+must not survive contact with real staff. Rotate or deactivate the twelve before the shop
+opens.
+
+---
+
+## Known gaps
+
+Deliberately not built, listed so nobody assumes otherwise:
+
+- **Recipes and ingredient stock.** Pastries are counted; the drinks that make up most of
+  the revenue are not, because a latte consumes beans, milk and a cup rather than a unit of
+  itself. This is the largest missing piece for a coffee shop.
+- **Multi-branch.** One catalog, one sales pool, one settings document. Terminals are
+  separated; branches are not. A second location today would share the first one's stock.
+- **BIR accreditation.** Receipts say they are not official receipts, and mean it. A
+  Computerized Accounting System needs accreditation, an e-journal and a tamper-evident
+  audit trail before it can issue one.
+- **Hardware beyond browser printing.** No ESC/POS thermal driver, no cash drawer kick, no
+  scale.
+- **Automatic payment confirmation**, as above: needs a merchant account and a server.
+- **Test coverage beyond the math.** `npm run check` covers money, stock, shifts and
+  returns. There are no component or end-to-end tests.
+- **Bundle size.** 297 KB gzipped, roughly 125 KB of it the ZXing scanner fallback,
+  precached whether or not the till ever scans with a camera.

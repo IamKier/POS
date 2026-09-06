@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { FileText, ReceiptText, TrendingUp } from "lucide-react";
+import { Download, FileText, ReceiptText, TrendingUp, Undo2 } from "lucide-react";
 import { usePos } from "../store/context.js";
 import {
   Badge,
@@ -14,6 +14,16 @@ import { useAuth } from "../auth/context.js";
 import DaySummaryModal from "../components/DaySummaryModal.jsx";
 import { summarize } from "../lib/report.js";
 import { tenderLabel } from "../lib/payments.js";
+import ReturnModal from "../components/ReturnModal.jsx";
+import { buildReturn, canReturn } from "../lib/returns.js";
+import {
+  downloadCsv,
+  LINE_COLUMNS,
+  SALE_COLUMNS,
+  saleLines,
+  toCsv,
+} from "../lib/csv.js";
+import { activeShiftOf } from "../lib/shift.js";
 import {
   dayKey,
   formatMoney,
@@ -29,11 +39,22 @@ const RANGES = [
 ];
 
 export default function Sales() {
-  const { dispatch, sales, settings, productById, categoryById } = usePos();
+  const {
+    dispatch,
+    sales,
+    settings,
+    productById,
+    categoryById,
+    shifts,
+    activeShiftId,
+    terminal,
+    saleCounter,
+  } = usePos();
   const [range, setRange] = useState("today");
   const [openSale, setOpenSale] = useState(null);
   const [showSummary, setShowSummary] = useState(false);
   const [approval, setApproval] = useState(null);
+  const [returning, setReturning] = useState(null);
   const { isManager, user, profile } = useAuth();
 
   /* The clock is read once when the screen opens, so the range boundary
@@ -97,19 +118,91 @@ export default function Sales() {
     });
   }
 
+  function applyReturn(sale, { selections, refundMethod, reason }, approvedBy) {
+    const prefix = `${terminal?.code ?? "T"}-`;
+    const highest = sales.reduce((max, s) => {
+      if (!s.number?.startsWith(prefix)) return max;
+      const value = Number(s.number.slice(prefix.length));
+      return Number.isFinite(value) && value > max ? value : max;
+    }, 0);
+    const next = Math.max(saleCounter ?? 1, highest + 1);
+
+    const shift = activeShiftOf({ shifts, activeShiftId });
+    const built = buildReturn({
+      sale,
+      selections,
+      number: `${prefix}${String(next).padStart(5, "0")}`,
+      at: new Date().toISOString(),
+      cashier: user ? { uid: user.uid, name: profile?.name ?? user.uid } : null,
+      shiftId: shift?.id ?? null,
+      refundMethod,
+      reason,
+      approvedBy,
+    });
+    if (!built) return;
+
+    dispatch({ type: "sale/return", sale: built, at: built.at, counter: next + 1 });
+    setReturning(null);
+    setOpenSale(null);
+  }
+
+  function startReturn(sale, details) {
+    const me = user ? { uid: user.uid, name: profile?.name ?? user.uid } : null;
+    if (isManager) {
+      applyReturn(sale, details, me);
+      return;
+    }
+    setApproval({
+      action: `Refund against ${sale.number}`,
+      run: (manager) => applyReturn(sale, details, manager),
+    });
+  }
+
+  function exportCsv(kind) {
+    const stamp = new Date().toISOString().slice(0, 10);
+    if (kind === "lines") {
+      downloadCsv(
+        `sales-lines-${stamp}.csv`,
+        toCsv(LINE_COLUMNS, saleLines(inRange)),
+      );
+    } else {
+      downloadCsv(`sales-${stamp}.csv`, toCsv(SALE_COLUMNS, inRange));
+    }
+  }
+
   return (
     <>
       <PageHeader
         title="Sales"
         actions={
-          <Button
-            variant="outline"
-            disabled={!inRange.length}
-            onClick={() => setShowSummary(true)}
-          >
-            <FileText className="size-4" />
-            <span className="hidden sm:inline">Summary</span>
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              disabled={!inRange.length}
+              onClick={() => exportCsv("sales")}
+              title="One row per receipt"
+            >
+              <Download className="size-4" />
+              <span className="hidden sm:inline">Export</span>
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!inRange.length}
+              onClick={() => exportCsv("lines")}
+              title="One row per item sold"
+            >
+              <Download className="size-4" />
+              <span className="hidden lg:inline">Lines</span>
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!inRange.length}
+              onClick={() => setShowSummary(true)}
+            >
+              <FileText className="size-4" />
+              <span className="hidden sm:inline">Summary</span>
+            </Button>
+          </>
         }
       >
         {RANGES.map((r) => (
@@ -247,6 +340,19 @@ export default function Sales() {
           settings={settings}
           onClose={() => setOpenSale(null)}
           onVoid={() => voidSale(openSale)}
+          onReturn={
+            canReturn(openSale, sales) ? () => setReturning(openSale) : undefined
+          }
+        />
+      ) : null}
+
+      {returning ? (
+        <ReturnModal
+          sale={returning}
+          sales={sales}
+          settings={settings}
+          onClose={() => setReturning(null)}
+          onConfirm={(details) => startReturn(returning, details)}
         />
       ) : null}
 
