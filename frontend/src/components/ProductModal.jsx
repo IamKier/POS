@@ -5,9 +5,11 @@ import { uid } from "../lib/format.js";
 import ScannerModal from "./ScannerModal.jsx";
 import { cameraSupported } from "../lib/scanner.js";
 import { listenForScans } from "../lib/hardwareScanner.js";
+import ImageField from "./ImageField.jsx";
 
 const BLANK = {
   name: "",
+  image: "",
   sku: "",
   barcode: "",
   categoryId: "",
@@ -84,6 +86,7 @@ export default function ProductModal({ product, categories, onClose, onSave }) {
 
     onSave({
       ...form,
+      image: form.image ?? "",
       id: product?.id ?? uid("prd"),
       name: form.name.trim(),
       sku: form.sku.trim(),
@@ -115,6 +118,12 @@ export default function ProductModal({ product, categories, onClose, onSave }) {
       }
     >
       <div className="space-y-4">
+        <ImageField
+          value={form.image}
+          onChange={(image) => set({ image })}
+          hint="Shown on the card at the till. A photo is the fastest way to find something on a busy screen."
+        />
+
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Name" className="sm:col-span-2">
             <Input

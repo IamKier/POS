@@ -17,15 +17,17 @@ export const defaultSettings = {
   statutoryDiscount: true, // senior citizen and PWD, 20 percent and VAT exempt
   statutoryRate: 0.2,
   serviceMode: "retail", // "retail" for one running cart, "tables" for open bills
-  theme: "light", // the till is white by default; "dark" is opt-in
   receiptFooter: "Thank you and please come again.",
 };
 
 export const seedCategories = [
-  { id: "cat_drinks", name: "Drinks", color: "#0ea5e9" },
-  { id: "cat_food", name: "Food", color: "#f97316" },
-  { id: "cat_grocery", name: "Grocery", color: "#10b981" },
-  { id: "cat_household", name: "Household", color: "#8b5cf6" },
+  /* Validated for colour-blind separation against a white surface.
+     See the dataviz palette checks: deeper tones read as corporate
+     while still telling apart under protanopia and deuteranopia. */
+  { id: "cat_drinks", name: "Drinks", color: "#1d4ed8" },
+  { id: "cat_food", name: "Food", color: "#b45309" },
+  { id: "cat_grocery", name: "Grocery", color: "#047857" },
+  { id: "cat_household", name: "Household", color: "#9333ea" },
 ];
 
 const sizeGroup = {

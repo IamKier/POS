@@ -9,7 +9,7 @@ import {
   Textarea,
   Toggle,
 } from "../components/ui.jsx";
-import PaymentQrField from "../components/PaymentQrField.jsx";
+import ImageField from "../components/ImageField.jsx";
 
 const CURRENCIES = ["PHP", "USD", "EUR", "SGD"];
 
@@ -171,9 +171,11 @@ export default function Settings() {
             title="Payment QR"
             hint="Shown to the customer at checkout for GCash, Maya and QR Ph."
           >
-            <PaymentQrField
+            <ImageField
               value={settings.paymentQr ?? ""}
               onChange={(paymentQr) => save({ paymentQr })}
+              hint="A screenshot of your GCash, Maya or QR Ph code. It appears full size at checkout for the customer to scan."
+              options={{ maxEdge: 700, quality: 0.85, maxBytes: 300 * 1024 }}
             />
             <p className="mt-4 text-xs text-muted">
               Nothing here talks to GCash or a bank. The customer scans, shows

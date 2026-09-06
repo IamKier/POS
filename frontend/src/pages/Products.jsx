@@ -134,11 +134,22 @@ export default function Products() {
                   return (
                     <tr key={product.id} className="hover:bg-surface-2">
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className="size-2.5 shrink-0 rounded-full"
-                            style={{ background: category?.color ?? "#d1d5db" }}
-                          />
+                        <div className="flex items-center gap-3">
+                          {product.image ? (
+                            <img
+                              src={product.image}
+                              alt=""
+                              loading="lazy"
+                              className="size-10 shrink-0 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <span
+                              className="flex size-10 shrink-0 items-center justify-center rounded-lg text-xs font-semibold text-white"
+                              style={{ background: category?.color ?? "#8a857c" }}
+                            >
+                              {product.name.slice(0, 2).toUpperCase()}
+                            </span>
+                          )}
                           <div className="min-w-0">
                             <p className="font-medium text-ink">{product.name}</p>
                             {product.modifierGroups?.length ? (

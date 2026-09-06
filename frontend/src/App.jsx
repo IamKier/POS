@@ -1,8 +1,7 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PosProvider from "./store/PosProvider.jsx";
 import AuthProvider from "./auth/AuthProvider.jsx";
 import { useAuth } from "./auth/context.js";
-import { usePos } from "./store/context.js";
 import Login from "./pages/Login.jsx";
 import RegisterShell from "./shells/RegisterShell.jsx";
 import AdminShell from "./shells/AdminShell.jsx";
@@ -21,17 +20,7 @@ import AdminShell from "./shells/AdminShell.jsx";
  */
 function Panels() {
   const { isManager } = useAuth();
-  const { settings } = usePos();
   const [panel, setPanel] = useState("register");
-
-  /* Applied here rather than in the admin sidebar, so the register
-     honours the theme without depending on that screen being visited. */
-  useEffect(() => {
-    document.documentElement.setAttribute(
-      "data-theme",
-      settings.theme === "dark" ? "dark" : "light",
-    );
-  }, [settings.theme]);
 
   if (panel === "admin" && isManager) {
     return <AdminShell onOpenRegister={() => setPanel("register")} />;

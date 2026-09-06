@@ -1,83 +1,50 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------
-   Design tokens. Every color in the app resolves to one of these,
-   which is what makes the dark theme a token swap rather than a
-   second set of classes. They live in Tailwind's own namespaces
+   Design tokens. Every colour in the app resolves to one of these,
+   which is what keeps the palette a single decision rather than a
+   thousand of them. They live in Tailwind's own namespaces
    (--color-*, --radius-*, --shadow-*), so each token is also a
    utility: bg-surface, text-muted, border-line, shadow-card.
 
-   Two accents on purpose:
-     --color-accent        text and icons, lightens in dark
-     --color-accent-solid  filled buttons, stays put so white
-                           label text keeps its contrast
+   One theme, on purpose. A till is a white screen under shop
+   lighting, and a register that changes appearance depending on the
+   device or the hour is a support call waiting to happen. There is no
+   dark mode and nothing follows prefers-color-scheme.
+
+   The neutrals are warm rather than blue-grey: paper and stone, not
+   slate. The accent is a single navy, used sparingly, on the things
+   that take an action.
    --------------------------------------------------------------- */
 @theme {
-  --color-canvas: #f7f8fa;
+  --color-canvas: #faf9f7;
   --color-surface: #ffffff;
-  --color-surface-2: #f4f5f8;
-  --color-surface-3: #eceef3;
-  --color-line: #eceef2;
-  --color-line-strong: #dde0e7;
+  --color-surface-2: #f4f2ee;
+  --color-surface-3: #eae7e1;
+  --color-line: #e9e6e0;
+  --color-line-strong: #d7d3ca;
 
-  --color-ink: #101828;
-  --color-muted: #667085;
+  --color-ink: #1a1a18;
+  --color-muted: #6e6a63;
 
-  --color-accent: #4f46e5;
-  --color-accent-solid: #4f46e5;
-  --color-accent-hover: #4338ca;
-  --color-accent-soft: #eef2ff;
+  --color-accent: #1e3a5f;
+  --color-accent-solid: #1e3a5f;
+  --color-accent-hover: #16304f;
+  --color-accent-soft: #eef1f6;
 
-  --color-good: #047857;
-  --color-good-soft: #ecfdf5;
+  --color-good: #15803d;
+  --color-good-soft: #f1f7f2;
   --color-warn: #b45309;
-  --color-warn-soft: #fffbeb;
-  --color-bad: #dc2626;
-  --color-bad-soft: #fef2f2;
+  --color-warn-soft: #fbf5ec;
+  --color-bad: #b42318;
+  --color-bad-soft: #fdf2f1;
 
   --radius-card: 0.75rem;
   --radius-pill: 999px;
 
-  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04);
-  --shadow-raised: 0 4px 14px -4px rgb(16 24 40 / 0.08);
-  --shadow-pop: 0 20px 48px -16px rgb(16 24 40 / 0.24);
-}
-
-/**
- * The till is white. A shop floor is bright, a dark screen washes out
- * under it, and a register that changes colour when the sun goes down
- * is not what anyone wants behind a counter.
- *
- * Dark is therefore an explicit choice rather than something the
- * operating system decides, and it exists for the admin screens someone
- * might be reading late. Nothing follows prefers-color-scheme.
- */
-:root[data-theme="dark"] {
-  --color-canvas: #0b0f17;
-  --color-surface: #141a24;
-  --color-surface-2: #1b2330;
-  --color-surface-3: #232c3b;
-  --color-line: #222b39;
-  --color-line-strong: #333e50;
-
-  --color-ink: #e7ecf3;
-  --color-muted: #94a3b8;
-
-  --color-accent: #a5b4fc;
-  --color-accent-solid: #4f46e5;
-  --color-accent-hover: #6366f1;
-  --color-accent-soft: #1e2445;
-
-  --color-good: #34d399;
-  --color-good-soft: #06251c;
-  --color-warn: #fbbf24;
-  --color-warn-soft: #2a2010;
-  --color-bad: #f87171;
-  --color-bad-soft: #2c1618;
-
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-raised: 0 4px 12px -2px rgb(0 0 0 / 0.5);
-  --shadow-pop: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  --shadow-card: 0 1px 2px rgb(26 26 24 / 0.04);
+  --shadow-raised: 0 4px 14px -4px rgb(26 26 24 / 0.08);
+  --shadow-pop: 0 20px 48px -16px rgb(26 26 24 / 0.22);
 }
 
 html,
@@ -91,7 +58,7 @@ body {
   color: var(--color-ink);
   font-family: ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 /* Numbers that need to line up in a column: money, quantities, counts. */
@@ -102,13 +69,6 @@ body {
 .scroll-slim {
   scrollbar-width: thin;
   scrollbar-color: var(--color-line-strong) transparent;
-}
-
-/* A receipt is paper. It stays white in either theme, on screen and
-   on the roll, so what the cashier previews is what prints. */
-.paper {
-  background: #ffffff;
-  color: #000000;
 }
 
 /* ---------------------------------------------------------------

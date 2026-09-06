@@ -315,10 +315,17 @@ button rather than a label, because twelve of something should be two taps on a 
 instead of twelve taps on a plus sign. A scan lights up the tile it landed on, since a
 scan otherwise gives no feedback at all and the cashier scans again.
 
-The till is white. A shop floor is bright, a dark screen washes out under it, and a
-register that changes colour when the sun goes down is not what anyone wants behind a
-counter. Dark is an explicit choice in Settings, for the admin screens someone might be
-reading late, and nothing follows the operating system any more.
+One theme, white, no switch. A shop floor is bright, a dark screen washes out under it,
+and a register that changes appearance depending on the device or the hour is a support
+call waiting to happen. The neutrals are warm rather than blue-grey, paper and stone
+rather than slate, with a single navy accent used only on things that take an action.
+
+Products are cards with photographs. A photo is the fastest way to find an item on a busy
+screen, so it takes the top two thirds of the card; without one the card falls back to
+initials on the category colour, which still gives the eye something to aim at instead of
+a wall of identical white boxes. Images are downscaled to about 320px on upload and stored
+on the record, so a photo is available offline with the product it belongs to. Past a few
+hundred photographed items, Firebase Storage is the next step.
 
 ## Analytics
 

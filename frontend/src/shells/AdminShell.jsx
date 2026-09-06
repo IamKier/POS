@@ -3,13 +3,11 @@ import {
   BarChart3,
   Boxes,
   LogOut,
-  Moon,
   Package,
   ReceiptText,
   Settings as SettingsIcon,
   ShoppingCart,
   Store,
-  Sun,
   Users,
   Wallet,
 } from "lucide-react";
@@ -37,11 +35,6 @@ const PAGES = [
   { id: "shifts", label: "Shifts", icon: Wallet, Page: Shifts },
   { id: "staff", label: "Staff", icon: Users, Page: Staff },
   { id: "settings", label: "Settings", icon: SettingsIcon, Page: Settings },
-];
-
-const THEMES = [
-  { id: "light", label: "Light", icon: Sun },
-  { id: "dark", label: "Dark", icon: Moon },
 ];
 
 export default function AdminShell({ onOpenRegister }) {
@@ -100,7 +93,6 @@ export default function AdminShell({ onOpenRegister }) {
             <span className="hidden lg:block">Open the register</span>
           </button>
 
-          <ThemeToggle />
           <ConnectionBadge />
 
           {requiresAuth ? (
@@ -121,32 +113,6 @@ export default function AdminShell({ onOpenRegister }) {
         <Page />
       </main>
     </div>
-  );
-}
-
-function ThemeToggle() {
-  const { dispatch, settings } = usePos();
-  const index = Math.max(
-    0,
-    THEMES.findIndex((t) => t.id === (settings.theme ?? "light")),
-  );
-  const current = THEMES[index];
-  const next = THEMES[(index + 1) % THEMES.length];
-  const Icon = current.icon;
-
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", current.id);
-  }, [current.id]);
-
-  return (
-    <button
-      onClick={() => dispatch({ type: "settings/save", patch: { theme: next.id } })}
-      title={`${current.label}. Switch to ${next.label.toLowerCase()}.`}
-      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink"
-    >
-      <Icon className="size-5 shrink-0" />
-      <span className="hidden lg:block">{current.label}</span>
-    </button>
   );
 }
 
