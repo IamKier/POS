@@ -37,7 +37,7 @@ export default function ImageField({
       <div className="flex items-start gap-4">
         <div
           className={`flex size-28 shrink-0 items-center justify-center overflow-hidden border border-line bg-surface-2 ${
-            shape === "round" ? "rounded-full" : "rounded-xl"
+            shape === "round" ? "rounded-full" : "rounded-md"
           }`}
         >
           {value ? (

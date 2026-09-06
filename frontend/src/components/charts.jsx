@@ -37,7 +37,7 @@ export function BarChart({ data, format, height = 168, emptyLabel = "Nothing yet
   return (
     <div className="relative">
       {point ? (
-        <div className="pointer-events-none absolute -top-1 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-ink px-2.5 py-1.5 text-xs text-white shadow-raised">
+        <div className="pointer-events-none absolute -top-1 left-1/2 z-10 -translate-x-1/2 rounded bg-ink px-2.5 py-1.5 text-xs text-white shadow-raised">
           <span className="tnum font-semibold">{format(point.value)}</span>
           <span className="ml-2 opacity-70">{point.key}</span>
         </div>
@@ -88,9 +88,9 @@ export function BarChart({ data, format, height = 168, emptyLabel = "Nothing yet
 }
 
 /**
- * Ranked horizontal bars. Identity is carried by the label beside every
- * row, never by colour alone, which is also what relieves the low
- * contrast of a user-chosen category colour.
+ * Ranked horizontal bars. One hue, because every row measures the same
+ * thing and a row of different colours would imply otherwise. Identity
+ * is the label beside each bar, which is where it belongs.
  */
 export function RankedBars({ rows, format, emptyLabel = "Nothing yet" }) {
   const max = Math.max(...rows.map((r) => r.value), 0);
@@ -104,15 +104,7 @@ export function RankedBars({ rows, format, emptyLabel = "Nothing yet" }) {
       {rows.map((row) => (
         <li key={row.id}>
           <div className="mb-1.5 flex items-baseline justify-between gap-3">
-            <span className="flex min-w-0 items-center gap-2">
-              {row.color ? (
-                <span
-                  className="size-2.5 shrink-0 rounded-full"
-                  style={{ background: row.color }}
-                />
-              ) : null}
-              <span className="truncate text-sm text-ink">{row.name}</span>
-            </span>
+            <span className="truncate text-sm text-ink">{row.name}</span>
             <span className="tnum shrink-0 text-sm font-medium text-ink">
               {format(row.value)}
             </span>
@@ -122,7 +114,7 @@ export function RankedBars({ rows, format, emptyLabel = "Nothing yet" }) {
               className="h-full rounded-full"
               style={{
                 width: `${Math.max((row.value / max) * 100, 2)}%`,
-                background: row.color ?? BAR_HUE,
+                background: BAR_HUE,
               }}
             />
           </div>
@@ -141,7 +133,7 @@ export function StatTile({ label, value, hint, tone = "neutral" }) {
     accent: "text-accent",
   };
   return (
-    <div className="rounded-2xl border border-line bg-surface px-5 py-4">
+    <div className="rounded-md border border-line bg-surface px-5 py-4">
       <p className="text-xs font-medium tracking-wide text-muted uppercase">
         {label}
       </p>
@@ -156,7 +148,7 @@ export function StatTile({ label, value, hint, tone = "neutral" }) {
 export function Panel({ title, hint, children, className = "" }) {
   return (
     <section
-      className={`rounded-2xl border border-line bg-surface p-5 ${className}`}
+      className={`rounded-md border border-line bg-surface p-5 ${className}`}
     >
       <div className="mb-4">
         <h2 className="text-sm font-semibold text-ink">{title}</h2>

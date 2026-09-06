@@ -105,7 +105,7 @@ export default function ScannerModal({
             />
             {/* A window to aim through, rather than a full-frame guess. */}
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <div className="relative h-28 w-4/5 rounded-lg border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
+              <div className="relative h-28 w-4/5 rounded border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
                 <ScanLine className="absolute inset-x-0 top-1/2 mx-auto size-6 -translate-y-1/2 text-white/90" />
               </div>
             </div>

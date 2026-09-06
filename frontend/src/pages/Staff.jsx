@@ -120,7 +120,7 @@ export default function Staff() {
                             );
                             if (ok) setActive(person.uid, !leaving);
                           }}
-                          className={`rounded-lg px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 ${
+                          className={`rounded px-2 py-1.5 text-xs font-medium transition-colors disabled:opacity-40 ${
                             person.active === false
                               ? "text-good hover:bg-good-soft"
                               : "text-muted hover:bg-bad-soft hover:text-bad"

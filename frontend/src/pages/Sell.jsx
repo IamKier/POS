@@ -251,7 +251,7 @@ export default function Sell() {
               <button
                 onClick={() => setScanning(true)}
                 title="Scan with the camera"
-                className="flex h-12 shrink-0 items-center gap-2 rounded-xl border border-line px-4 text-sm font-medium text-ink transition-colors active:bg-surface-2"
+                className="flex h-12 shrink-0 items-center gap-2 rounded-md border border-line px-4 text-sm font-medium text-ink transition-colors active:bg-surface-2"
               >
                 <Camera className="size-4" />
                 <span className="hidden sm:inline">Scan</span>
@@ -271,7 +271,7 @@ export default function Sell() {
                   <button
                     key={tab.id}
                     onClick={() => dispatch({ type: "tab/select", tabId: tab.id })}
-                    className={`flex shrink-0 items-center gap-2 rounded-pill px-3 py-1.5 text-sm font-medium transition-colors ${
+                    className={`flex shrink-0 items-center gap-2 rounded px-3 py-1.5 text-sm font-medium transition-colors ${
                       active
                         ? "bg-accent-solid text-white"
                         : count
@@ -281,7 +281,7 @@ export default function Sell() {
                   >
                     {tab.name}
                     {count ? (
-                      <span className="tnum rounded-pill bg-black/15 px-1.5 text-xs">
+                      <span className="tnum rounded bg-black/15 px-1.5 text-xs">
                         {count}
                       </span>
                     ) : null}
@@ -293,7 +293,7 @@ export default function Sell() {
                   const name = window.prompt("Name for the new table or tab");
                   if (name?.trim()) dispatch({ type: "tab/add", name: name.trim() });
                 }}
-                className="flex shrink-0 items-center gap-1 rounded-pill border border-dashed border-line-strong px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
+                className="flex shrink-0 items-center gap-1 rounded border border-dashed border-line-strong px-3 py-1.5 text-sm text-muted transition-colors hover:border-accent hover:text-accent"
               >
                 <Plus className="size-3.5" />
                 Add
@@ -314,10 +314,6 @@ export default function Sell() {
                 active={categoryId === c.id}
                 onClick={() => setCategoryId(c.id)}
               >
-                <span
-                  className="size-2 rounded-full"
-                  style={{ background: categoryId === c.id ? "#fff" : c.color }}
-                />
                 {c.name}
               </Chip>
             ))}

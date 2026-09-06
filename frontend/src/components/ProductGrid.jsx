@@ -47,7 +47,7 @@ export default function ProductGrid({
             key={product.id}
             disabled={out}
             onClick={() => onPick(product)}
-            className={`group flex flex-col overflow-hidden rounded-2xl border bg-surface text-left transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 ${
+            className={`group flex flex-col overflow-hidden rounded-md border bg-surface text-left transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45 ${
               added
                 ? "border-accent-solid ring-2 ring-accent-solid/25"
                 : "border-line"
@@ -71,7 +71,7 @@ export default function ProductGrid({
               )}
 
               {product.modifierGroups?.length ? (
-                <span className="absolute top-2 right-2 rounded-lg bg-white/90 p-1.5">
+                <span className="absolute top-2 right-2 rounded bg-white/90 p-1.5">
                   <SlidersHorizontal className="size-3.5 text-ink" />
                 </span>
               ) : null}
@@ -81,7 +81,7 @@ export default function ProductGrid({
                   Out of stock
                 </span>
               ) : low ? (
-                <span className="absolute right-2 bottom-2 rounded-lg bg-warn px-2 py-0.5 text-xs font-medium text-white">
+                <span className="absolute right-2 bottom-2 rounded bg-warn px-2 py-0.5 text-xs font-medium text-white">
                   {product.stock} left
                 </span>
               ) : null}

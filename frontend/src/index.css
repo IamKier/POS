@@ -39,7 +39,9 @@
   --color-bad: #b42318;
   --color-bad-soft: #fdf2f1;
 
-  --radius-card: 0.75rem;
+  /* Corporate rather than friendly: a small radius reads as a tool,
+     a large one reads as a consumer app. */
+  --radius-card: 0.25rem;
   --radius-pill: 999px;
 
   --shadow-card: 0 1px 2px rgb(26 26 24 / 0.04);

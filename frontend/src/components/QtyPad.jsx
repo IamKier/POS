@@ -38,7 +38,7 @@ export default function QtyPad({ line, currency, onApply, onRemove, onClose }) {
       }
     >
       <div>
-        <div className="mb-4 rounded-2xl bg-surface-2 py-5 text-center">
+        <div className="mb-4 rounded-md bg-surface-2 py-5 text-center">
           <p className="tnum text-4xl font-semibold text-ink">{qty || 0}</p>
           <p className="mt-1 text-xs tracking-wide text-muted uppercase">
             Quantity
@@ -69,7 +69,7 @@ function PadKey(props) {
   return (
     <button
       type="button"
-      className="flex h-16 items-center justify-center rounded-2xl border border-line bg-surface text-2xl font-medium text-ink transition-colors active:bg-surface-2"
+      className="flex h-16 items-center justify-center rounded-md border border-line bg-surface text-2xl font-medium text-ink transition-colors active:bg-surface-2"
       {...props}
     />
   );

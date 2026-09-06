@@ -45,7 +45,7 @@ export default function CartPanel({
           <ShoppingCart className="size-5 text-muted" />
           Order
           {totals.itemCount > 0 ? (
-            <span className="tnum rounded-pill bg-accent-soft px-2.5 py-1 text-sm text-accent">
+            <span className="tnum rounded bg-accent-soft px-2.5 py-1 text-sm text-accent">
               {totals.itemCount}
             </span>
           ) : null}
@@ -53,7 +53,7 @@ export default function CartPanel({
         {!empty ? (
           <button
             onClick={onClear}
-            className="rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-bad active:bg-surface-2"
+            className="rounded px-3 py-2 text-sm font-medium text-muted transition-colors hover:text-bad active:bg-surface-2"
           >
             Clear
           </button>
@@ -101,7 +101,7 @@ export default function CartPanel({
                   <button
                     onClick={() => setEditingLine(line)}
                     title="Type a quantity"
-                    className="tnum h-12 min-w-14 rounded-xl bg-surface-2 px-3 text-lg font-semibold text-ink transition-colors active:bg-surface-3"
+                    className="tnum h-12 min-w-14 rounded-md bg-surface-2 px-3 text-lg font-semibold text-ink transition-colors active:bg-surface-3"
                   >
                     {line.qty}
                   </button>
@@ -132,7 +132,7 @@ export default function CartPanel({
           value={cart.note}
           onChange={(e) => onNote(e.target.value)}
           placeholder="Order note"
-          className="mb-3 h-11 w-full rounded-xl bg-surface-2 px-3 text-sm text-ink outline-none placeholder:text-muted/70 focus:ring-2 focus:ring-accent-solid/20"
+          className="mb-3 h-11 w-full rounded-md bg-surface-2 px-3 text-sm text-ink outline-none placeholder:text-muted/70 focus:ring-2 focus:ring-accent-solid/20"
         />
 
         <dl className="space-y-2 text-[15px]">
@@ -143,7 +143,7 @@ export default function CartPanel({
               onClick={() =>
                 discountLocked ? onUnlockDiscount() : setEditingDiscount((v) => !v)
               }
-              className="-ml-2 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-muted transition-colors hover:text-accent active:bg-surface-2"
+              className="-ml-2 flex items-center gap-1.5 rounded px-2 py-1.5 text-muted transition-colors hover:text-accent active:bg-surface-2"
             >
               {discountLocked ? (
                 <Lock className="size-4" />
@@ -161,7 +161,7 @@ export default function CartPanel({
 
           {editingDiscount && !discountLocked ? (
             <div className="flex items-center gap-2 pb-1">
-              <div className="flex overflow-hidden rounded-xl border border-line-strong">
+              <div className="flex overflow-hidden rounded-md border border-line-strong">
                 {["percent", "amount"].map((type) => (
                   <button
                     key={type}
@@ -193,7 +193,7 @@ export default function CartPanel({
             <div className="flex items-center justify-between gap-2">
               <button
                 onClick={onCustomerDiscount}
-                className={`-ml-2 flex min-w-0 items-center gap-1.5 rounded-lg px-2 py-1.5 transition-colors hover:text-accent active:bg-surface-2 ${
+                className={`-ml-2 flex min-w-0 items-center gap-1.5 rounded px-2 py-1.5 transition-colors hover:text-accent active:bg-surface-2 ${
                   cart.customer ? "font-medium text-accent" : "text-muted"
                 }`}
               >
@@ -264,7 +264,7 @@ function StepButton({ label, className = "", ...props }) {
     <button
       aria-label={label}
       title={label}
-      className={`flex size-12 shrink-0 items-center justify-center rounded-xl border border-line text-ink transition-colors active:bg-surface-2 ${className}`}
+      className={`flex size-12 shrink-0 items-center justify-center rounded-md border border-line text-ink transition-colors active:bg-surface-2 ${className}`}
       {...props}
     />
   );

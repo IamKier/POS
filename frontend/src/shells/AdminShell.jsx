@@ -48,7 +48,7 @@ export default function AdminShell({ onOpenRegister }) {
     <div className="flex h-screen overflow-hidden bg-surface-2">
       <nav className="no-print flex w-16 shrink-0 flex-col border-r border-line bg-surface lg:w-60">
         <div className="flex h-16 items-center gap-3 px-3 lg:px-4">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent-solid text-white">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-accent-solid text-white">
             <Store className="size-5" />
           </span>
           <span className="hidden min-w-0 lg:block">
@@ -71,7 +71,7 @@ export default function AdminShell({ onOpenRegister }) {
                   <button
                     onClick={() => setPage(item.id)}
                     title={item.label}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
+                    className={`flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm font-medium transition-colors ${
                       active
                         ? "bg-accent-soft text-accent"
                         : "text-muted hover:bg-surface-2 hover:text-ink"
@@ -89,7 +89,7 @@ export default function AdminShell({ onOpenRegister }) {
         <div className="border-t border-line p-2 lg:p-3">
           <button
             onClick={onOpenRegister}
-            className="mb-1 flex w-full items-center gap-3 rounded-xl bg-accent-solid px-3 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+            className="mb-1 flex w-full items-center gap-3 rounded-md bg-accent-solid px-3 py-3 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
           >
             <ShoppingCart className="size-5 shrink-0" />
             <span className="hidden lg:block">Open the register</span>
@@ -100,7 +100,7 @@ export default function AdminShell({ onOpenRegister }) {
           {requiresAuth ? (
             <button
               onClick={() => signOutNow()}
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink"
+              className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-ink"
             >
               <LogOut className="size-5 shrink-0" />
               <span className="hidden truncate lg:block">
