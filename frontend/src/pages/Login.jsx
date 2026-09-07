@@ -10,6 +10,22 @@ import {
   signInWithPin,
 } from "../auth/authService.js";
 import { codeProblem, pinProblem } from "../auth/pin.js";
+import { STORAGE_KEY } from "../store/reducer.js";
+
+/**
+ * The shop name, read straight from the local mirror. The sign-in
+ * screen sits outside the provider that owns settings, so hardcoding a
+ * name here meant a shop called something else was greeted by a
+ * stranger every morning.
+ */
+function cachedStoreName() {
+  try {
+    const saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "{}");
+    return saved?.settings?.storeName || "Point of sale";
+  } catch {
+    return "Point of sale";
+  }
+}
 
 export default function Login({ onOfflineUnlock }) {
   const [mode, setMode] = useState("signin"); // or "owner"
@@ -20,6 +36,7 @@ export default function Login({ onOfflineUnlock }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [online, setOnline] = useState(true);
+  const [storeName] = useState(cachedStoreName);
 
   useEffect(() => {
     const update = () => setOnline(window.navigator.onLine);
@@ -97,7 +114,9 @@ export default function Login({ onOfflineUnlock }) {
             <Store className="size-5" />
           </span>
           <div className="min-w-0">
-            <h1 className="text-base font-semibold text-ink">Tindahan POS</h1>
+            <h1 className="truncate text-base font-semibold text-ink">
+              {storeName}
+            </h1>
             <p className="truncate text-sm text-muted">
               {mode === "owner" ? "Set up the owner" : "Enter your code and PIN"}
             </p>
@@ -127,12 +146,16 @@ export default function Login({ onOfflineUnlock }) {
 
           <Field
             label="Staff code"
-            hint={mode === "owner" ? "Short and memorable, like kier." : undefined}
+            hint={
+              mode === "owner"
+                ? "Short and memorable. Staff will type this every shift."
+                : undefined
+            }
           >
             <Input
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="kier"
+              placeholder="your staff code"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck="false"
@@ -155,9 +178,14 @@ export default function Login({ onOfflineUnlock }) {
           </div>
 
           {error ? (
-            <p className="rounded-card bg-bad-soft px-3 py-2 text-sm text-bad">
-              {error}
-            </p>
+            <div className="rounded-card bg-bad-soft px-3 py-2 text-sm text-bad">
+              <p>{error}</p>
+              {/* Firebase gives one error for both, so say so. */}
+              <p className="mt-1 text-xs opacity-80">
+                Check the staff code as well. An unknown code and a wrong PIN
+                look the same from here.
+              </p>
+            </div>
           ) : null}
 
           {busy ? (
