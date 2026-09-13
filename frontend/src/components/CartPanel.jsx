@@ -39,7 +39,7 @@ export default function CartPanel({
   const empty = cart.items.length === 0;
 
   return (
-    <aside className="no-print flex w-full max-w-md min-w-0 shrink-0 flex-col border-l border-line bg-surface md:w-[24rem] lg:w-[27rem]">
+    <aside className="no-print flex h-[min(48vh,32rem)] w-full max-w-none min-w-0 shrink-0 flex-col border-t border-line bg-surface md:h-auto md:max-w-md md:w-[24rem] md:border-t-0 md:border-l lg:w-[27rem]">
       <header className="flex h-16 items-center justify-between border-b border-line px-4">
         <h2 className="flex items-center gap-2 text-[15px] font-semibold text-ink">
           <ShoppingCart className="size-5 text-muted" />

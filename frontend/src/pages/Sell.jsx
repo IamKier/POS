@@ -219,8 +219,8 @@ export default function Sell() {
 
   return (
     <>
-      <div className="flex min-h-0 flex-1">
-        <section className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        <section className="flex min-h-0 min-w-0 flex-1 flex-col">
           <header className="no-print flex h-16 items-center gap-3 border-b border-line bg-surface px-4">
             <div className="relative flex min-w-0 flex-1 items-center">
               <SearchInput

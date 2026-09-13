@@ -39,7 +39,7 @@ export function IconButton({ className = "", label, ...props }) {
     <button
       aria-label={label}
       title={label}
-      className={`inline-flex size-8 items-center justify-center rounded-sm text-muted transition-colors hover:bg-surface-2 hover:text-ink ${className}`}
+      className={`inline-flex size-11 items-center justify-center rounded-sm text-muted transition-colors hover:bg-surface-2 hover:text-ink ${className}`}
       {...props}
     />
   );
@@ -129,7 +129,7 @@ export function Toggle({ checked, onChange, label }) {
 export function Chip({ active, className = "", ...props }) {
   return (
     <button
-      className={`flex shrink-0 items-center gap-2 rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${
+      className={`flex min-h-11 shrink-0 items-center gap-2 rounded-sm px-3 py-2 text-sm font-medium transition-colors ${
         active
           ? "bg-accent-solid text-white shadow-card"
           : "bg-surface-2 text-muted hover:bg-surface-3 hover:text-ink"
